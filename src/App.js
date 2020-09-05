@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react'
-import { fetch as filecoinFetch, fetchHead } from './services/filecoin'
+import {
+    BrowserRouter as Router,
+    Switch,
+    Route,
+    Link,
+    useRouteMatch,
+    useParams
+} from "react-router-dom";
+import {
+    fetchHead,
+    fetchSectors,
+    fetchDeadlines,
+    fetchPreCommittedSectors,
+    fetchDeposits
+} from './services/filecoin'
 import Blockies from 'blockies-identicon'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './App.scss'
@@ -15,7 +29,7 @@ function App () {
     const [hashInput, setHashInput] = useState(window.localStorage.getItem('hash') || '')
     const [head, setHead] = useState(getJSONFromHistory('head'))
 
-    // Bootstrap: Fetch head
+    // Fetch head
     useEffect(() => {
         const fetchingHead = async () => {
             const fetched = await fetchHead()
@@ -28,21 +42,43 @@ function App () {
 
     // On new (hash or head): fetch miner
     useEffect(() => {
-        let mounted = true
+        if (!hash || !head) return;
 
-        const fetchMiner = async () => {
-            if (hash && head) {
-                const miner = await filecoinFetch(hash, head)
-                if (mounted) {
-                    console.log('spacegap','logged correct miner', hash, miner.id)
-                    setMiner(miner)
-                    window.localStorage.setItem('miner', JSON.stringify(miner))
-                } else {
-                    console.log('spacegap', 'logged incorrect miner', hash, miner.id)
-                }
+        let mounted = true
+        setMiner({...miner})
+
+        fetchDeadlines(hash, head).then(deadlines => {
+            if (mounted) {
+                miner.deadlines = deadlines
+                setMiner({...miner})
+                window.localStorage.setItem('miner', JSON.stringify(miner))
             }
-        }
-        fetchMiner(head, hash)
+        })
+
+        fetchDeposits(hash, head).then(deposits => {
+            if (mounted) {
+                miner.deposits = deposits
+                setMiner({...miner})
+                window.localStorage.setItem('miner', JSON.stringify(miner))
+            }
+        })
+
+        fetchPreCommittedSectors(hash, head).then(preCommitDeadlines => {
+            if (mounted) {
+                miner.preCommitDeadlines = preCommitDeadlines
+                setMiner({...miner})
+                window.localStorage.setItem('miner', JSON.stringify(miner))
+            }
+        })
+
+        fetchSectors(hash, head).then(sectors => {
+            if (mounted) {
+                miner.sectors = sectors
+                setMiner({...miner})
+                window.localStorage.setItem('miner', JSON.stringify(miner))
+            }
+        })
+
         return () => { mounted = false }
     }, [head, hash])
 
@@ -58,30 +94,42 @@ function App () {
         e.preventDefault()
         setHash(hashInput)
         window.localStorage.setItem('hash', hashInput)
-        setMiner()
+        setMiner({id: hashInput})
     }
 
 
     return (
-        <div className='App'>
-            <header className='container-fluid'>
-                <h1>spacegap</h1>
-            </header>
-            <section id='LookUp' className='container'>
-                <form onSubmit={handleLookup}>
-                    <input
-                        type='text'
-                        value={hashInput}
-                        onChange={e => setHashInput(e.target.value)}
-                    />
-                    <input type="submit" value="Look"/>
-                </form>
-            </section>
-            <section className='container'>
-                <Miner miner={miner} head={head} />
-            </section>
-        </div>
+        <Router>
+            <div className='App'>
+                <header className='container-fluid'>
+                    <h1>spacegap</h1>
+                </header>
+                <Switch>
+                    <Route path='/'>
+                        <section id='LookUp' className='container'>
+                            <form onSubmit={handleLookup}>
+                                <input
+                                    type='text'
+                                    value={hashInput}
+                                    onChange={e => setHashInput(e.target.value)}
+                                />
+                                <input type="submit" value="Look"/>
+                            </form>
+                        </section>
+                    </Route>
+                    <Route path='/miners/:minerId'>
+                        <section className='container'>
+                            <Miner miner={miner} head={head} />
+                        </section>
+                    </Route>
+                </Switch>
+            </div>
+        </Router>
     )
+}
+
+function MinerSection () {
+
 }
 
 const PoSt = ({ epoch, posted, skipped }) => {
@@ -122,34 +170,38 @@ const Miner = ({ miner, head }) => {
             <h1>{miner.id}</h1>
 
             <div>
-                <div className='row'>
-                    <div class="col">
-                        <h3>💵 Balance</h3>
-                    </div>
-                    <div class="col">
-                        Miner is not in debt
-                    </div>
-                </div>
-                <div className='row'>
+                <div className='grid'>
                     {
-                        miner.collateral &&
-                        <div class="col-sm">
-                            <h2>{miner.collateral || 0} FIL</h2>
-                            Collateral
+                        miner.deposits &&
+                        <div className="summary col-sm">
+                            <div className="summary-title">
+                                {miner.deposits.collateral || 0} FIL
+                            </div>
+                            <div className="summary-desc">
+                                Collateral
+                            </div>
                         </div>
                     }
                     {
-                        miner.available &&
-                        <div class="col-sm">
-                            <h2>{miner.available || 0} FIL</h2>
-                            Available
+                        miner.deposits &&
+                        <div className="summary col-sm">
+                            <div className="summary-title">
+                                {miner.deposits.available || 0} FIL
+                            </div>
+                            <div className="summary-desc">
+                                Available
+                            </div>
                         </div>
                     }
                     {
-                        miner.locked &&
-                        <div class="col-sm">
-                            <h2>{miner.locked || 0} FIL</h2>
-                            Locked
+                        miner.deposits &&
+                        <div className="summary col-sm">
+                            <div className="summary-title">
+                                {miner.deposits.locked || 0} FIL
+                            </div>
+                            <div className="summary-desc">
+                                Locked
+                            </div>
                         </div>
                     }
                 </div>
@@ -158,14 +210,14 @@ const Miner = ({ miner, head }) => {
             <div>
                 <div className='row'>
                     <div className='col'>
-                        <h3>📦 Sectors</h3>
+                        <h3>Sectors</h3>
                     </div>
                 </div>
                 <div className='row'>
                     {
-                        miner.sectorsCount &&
+                        miner.sectors &&
                         <div className='col'>
-                            <h2>{miner.sectorsCount}</h2>
+                            <h2>{miner.sectors.sectorsCount}</h2>
                             Sectors
                         </div>
                     }
@@ -175,23 +227,37 @@ const Miner = ({ miner, head }) => {
             <div>
                 <div className='row'>
                     <div className='col'>
-                        <h3>🛎 Upcoming duties</h3>
+                        <h3>Upcoming duties</h3>
                     </div>
+                </div>
+                <div className="row deadlines">
+                    {
+                        miner.deadlines && miner.deadlines.nextDeadlines.map(d =>
+                            <div className='deadline col-3'>
+                                {d.TotalSectors} sectors ({Math.round(d.TotalSectors * 32 /1024)}TiB) in {d.Close - head.Height}
+                                {
+                                    [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
+                                        <div className='partition'></div>
+                                    )
+                                }</div>
+                        )
+                    }
+
                 </div>
                 <div className='row'>
                     <div className='col'>
                         {
-                            miner.nextDeadlines &&
+                            miner.deadlines &&
                             <div className='row'>
                                 {
-                                    miner.nextDeadlines.slice(0,10).map(d =>
+                                    miner.deadlines.nextDeadlines.slice(0,10).map(d =>
                                         <div className='container'>
                                             <div className='row'>
                                                 <div className='col-2'>
-                                                    In {(d - head.Height)} epochs
+                                                    In {(d.Close - head.Height)} epochs
                                                 </div>
                                                 <div className='col'>
-                                                    WindowPoSt in  epochs {(d - head.Height)*30/60/60}h
+                                                    WindowPoSt in  epochs {(d.Close - head.Height)*30/60/60}h
                                                 </div>
                                             </div>
                                         </div>

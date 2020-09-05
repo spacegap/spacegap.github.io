@@ -13,6 +13,38 @@
 /* } */
 
 .Circle {
-  height: 20px;
-  width: 20px;
+    height: 20px;
+    width: 20px;
+}
+
+.summary {
+    background-color: rgb(240, 245, 249);
+    border-radius: 4px;
+    text-align: center;
+    padding-top: 30px;
+    padding-bottom: 20px;
+    .summary-title {
+        font-weight: bold;
+        font-size: 1.5em;
+    }
+    .summary-desc {
+        color: #657795;
+    }
+}
+
+.grid {
+    display: grid;
+    grid-column-gap: 16px;
+    margin-bottom: 32px;
+    grid-template-columns: repeat(3,1fr);
+}
+@media (max-width: 992px) {
+    .grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+@media (max-width: 600px) {
+    .grid {
+        grid-template-columns: repeat(1, 1fr);
+    }
 }
