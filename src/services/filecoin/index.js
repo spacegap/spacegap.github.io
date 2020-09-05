@@ -66,6 +66,21 @@ export const fetchDeposits = async (hash, head) => {
   }
 }
 
+export const getMiners = async () => {
+  const cached = window.localStorage.getItem('miners')
+  if (cached) return JSON.parse(cached)
+
+  const json = await (await fetch('https://filfox.info/api/v0/miner/list/power?pageSize=1000&page=0')).json()
+  const miners = json.miners.reduce((acc, curr) => {
+    acc[curr.address] = curr;
+    return acc
+  }, {})
+
+  window.localStorage.setItem('miners', JSON.stringify(miners))
+
+  return miners
+}
+
 export const fetchDeadlines = async (hash, head) => {
   const [deadline, deadlines] = await Promise.all([
           client.StateMinerProvingDeadline(hash, head.Cids),

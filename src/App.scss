@@ -17,8 +17,15 @@
     width: 20px;
 }
 
+h3 {
+    text-transform: uppercase;
+    font-weight: bolder;
+    font-size: 1.5em;
+}
+
 .summary {
     background-color: rgb(240, 245, 249);
+    /* border: 1px solid; */
     border-radius: 4px;
     text-align: center;
     padding-top: 30px;
@@ -29,7 +36,68 @@
     }
     .summary-desc {
         color: #657795;
+        text-transform: uppercase;
+        font-weight: bold;
+        font-size: 0.8em;
     }
+}
+.deadlines {
+    display: grid;
+    grid-template-columns: repeat(12,1fr);
+    grid-column-gap: 10px;
+    grid-row-gap: 10px;
+
+}
+.deadline {
+    font-size: 0.7em;
+    .epochs {
+        font-size: 0.8em;
+        line-height: 0.3em;
+    }
+}
+.partition {
+    width: 10px;
+    height: 10px;
+    margin: 2px;
+    border: 1px solid;
+    display: block;
+}
+.hdds {
+    display: grid;
+    grid-template-columns: repeat(10,1fr);
+    grid-column-gap: 1px;
+    grid-row-gap: 2px;
+    border: 2px solid;
+    padding: 1px;
+    /* border-top: 7px solid; */
+}
+.hdd {
+    width: 3px;
+    height: 11px;
+    background: #fff;
+    border: 1px solid;
+}
+.provecommit .hdd {
+    width: 5px;
+    height: 5px;
+    border-radius: 10px;
+}
+.out {
+    text-align: center;
+}
+.in {
+    border-radius: 2px 2px 0px 0px;
+    background: #000;
+    color: #fff;
+    font-size: 0.9em;
+    width: 100%;
+    padding: 2px;
+    text-transform: uppercase;
+    text-align: center;
+    font-weight: bold;
+}
+.provecommit .in {
+    display: hidden;
 }
 
 .grid {
