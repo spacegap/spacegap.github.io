@@ -21,6 +21,7 @@ h3 {
     text-transform: uppercase;
     font-weight: bolder;
     font-size: 1.5em;
+    margin-bottom: 20px;
 }
 
 .summary {
@@ -64,18 +65,24 @@ h3 {
 }
 .hdds {
     display: grid;
-    grid-template-columns: repeat(10,1fr);
+    grid-template-columns: repeat(10, 1fr);
     grid-column-gap: 1px;
     grid-row-gap: 2px;
-    border: 2px solid;
+    border: 3px solid #f0f5f9;
     padding: 1px;
     /* border-top: 7px solid; */
 }
 .hdd {
     width: 3px;
     height: 11px;
-    background: #fff;
-    border: 1px solid;
+    background: #dfe8f9;
+    border: 1px solid #657795;
+}
+.opacity5 {
+    opacity: 0.4;
+}
+.provecommit .hdds {
+    grid-template-columns: repeat(6,1fr);
 }
 .provecommit .hdd {
     width: 5px;
@@ -87,32 +94,75 @@ h3 {
 }
 .in {
     border-radius: 2px 2px 0px 0px;
-    background: #000;
-    color: #fff;
+    background: #f0f5f9;
+    color: #657795;
     font-size: 0.9em;
     width: 100%;
     padding: 2px;
-    text-transform: uppercase;
     text-align: center;
     font-weight: bold;
 }
+
+.section {
+    margin-top: 20px;
+    margin-bottom: 40px;
+}
+
+.miner-name {
+    border: 1px solid #dfe8f9;
+    padding: 4px 7px;
+    border-radius: 10px;
+}
+
 .provecommit .in {
-    display: hidden;
+    display: none;
+}
+
+#logo {
+    font-weight: bold;
+    font-size: 30px;
+    text-align: center;
+    margin-top: 100px;
 }
 
 .grid {
     display: grid;
     grid-column-gap: 16px;
+    grid-row-gap: 16px;
     margin-bottom: 32px;
     grid-template-columns: repeat(3,1fr);
 }
+
+.hdd.faulty {
+    background: #c00;
+    border: #c00;
+}
+
+.hdd.true {
+    background: #0c0;
+    border: #0c0;
+}
+
 @media (max-width: 992px) {
     .grid {
         grid-template-columns: repeat(3, 1fr);
     }
 }
+.hddWrapper {
+    border: 1px solid #dfe8f9;
+    border-radius: 2px;
+}
+@media (max-width: 900px) {
+    .deadlines {
+        /* grid-template-columns: repeat(16, 1fr); */
+    }
+}
+
 @media (max-width: 600px) {
     .grid {
         grid-template-columns: repeat(1, 1fr);
+    }
+    .deadlines {
+        grid-template-columns: repeat(4, 1fr);
     }
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import {
-    BrowserRouter as Router,
+    HashRouter as Router,
     Switch,
     Route,
     Link,
@@ -19,6 +19,9 @@ import Blockies from 'blockies-identicon'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './App.scss'
 
+const d3 = require('d3')
+const f = d3.format(',')
+
 function getJSONFromHistory (name) {
     const prev = window.localStorage.getItem(name)
     return prev && JSON.parse(prev)
@@ -30,7 +33,9 @@ function App () {
         <Router>
             <div className='App'>
                 <header className='container-fluid'>
-                    <h1>spacegap</h1>
+                    <Link to="/">
+                        <h1 id="logo" className='logo'>spacegap</h1>
+                    </Link>
                 </header>
                 <Switch>
                     <Route path='/miners/:minerId'>
@@ -39,20 +44,33 @@ function App () {
                         </section>
                     </Route>
                     <Route path='/'>
-                        <section id='LookUp' className='container'>
-                            {/* <form onSubmit={handleLookup}>
-                                <input
-                                type='text'
-                                value={hashInput}
-                                onChange={e => setHashInput(e.target.value)}
-                                />
-                                <input type="submit" value="Look"/>
-                                </form> */}
-                        </section>
+                        <Home />
                     </Route>
                 </Switch>
             </div>
         </Router>
+    )
+}
+
+function Home () {
+    const [miners, setMiners] = useState()
+
+    useEffect(() => {
+        getMiners().then(res => {
+            setMiners(res)
+        })
+    }, [])
+
+    return (
+        <section id='LookUp' className='container'>
+            Dashboard for Proof-of-Space mining
+
+            {miners && Object.keys(miners).slice(0, 50).map(d =>
+                <div>
+                    <Link to={`/miners/${miners[d].address}`}>{miners[d].address}</Link>
+                </div>
+            )}
+        </section>
     )
 }
 
@@ -64,8 +82,17 @@ const PoSt = ({ epoch, posted, skipped }) => {
     )
 }
 
-const Circle = ({ state }) => {
-    return <div className={`circle ${state}`}>{state}</div>
+const Summary = ({condition, title, desc}) => {
+    return (
+        <div className="summary col-sm">
+            <div className="summary-title">
+                {title}
+            </div>
+            <div className="summary-desc">
+                {desc}
+            </div>
+        </div>
+    )
 }
 
 const Miner = () => {
@@ -85,7 +112,6 @@ const Miner = () => {
     useEffect(() => {
         const fetchingHead = async () => {
             const fetched = await fetchHead()
-            /* window.localStorage.setItem('head', JSON.stringify(fetched)) */
             setHead(fetched)
         }
         fetchingHead()
@@ -120,9 +146,9 @@ const Miner = () => {
             }
         })
 
-        fetchPreCommittedSectors(minerId, head).then(preCommitDeadlines => {
+        fetchPreCommittedSectors(minerId, head).then(preCommits => {
             if (mounted) {
-                miner.preCommitDeadlines = preCommitDeadlines
+                miner.preCommits = preCommits
                 setMiner({...miner})
                 /* window.localStorage.setItem('miner', JSON.stringify(miner)) */
             }
@@ -161,187 +187,168 @@ const Miner = () => {
 
     return (
         <div>
-            <span><canvas ref={canvasRef}></canvas></span>
-            <h1>
-                {miner.id}
-            </h1>
-            <div>
-                {miners && miners[miner.id].tag && <span>known as {miners[miner.id].tag.en}</span>}
-                {miners && miners[miner.id].location && <span> from {miners[miner.id].location.flagEmoji}</span>}
+            <div id="miner" className="section">
+                {/* <span><canvas ref={canvasRef}></canvas></span> */}
+                <h1>
+                    {miner.id}
+                </h1>
                 <div>
-                    <a href={`https://filfox.info/en/address/${miner.id}`}>more</a>
-                </div>
-            </div>
+                    {miners && miners[miner.id].tag && <span className="miner-name">{miners[miner.id].tag.en}</span>}
+                    {miners && miners[miner.id].location && <span> from {miners[miner.id].location.flagEmoji}</span>}
+                    &nbsp;
+                    (
+                    <a target='_blank' href={`https://filfox.info/en/address/${miner.id}`}>filfox</a>,&nbsp;
+                        <a href={`https://filscan.io/#/tipset/address-detail?address=${miner.identicon}`}>filscan</a>,&nbsp;
+                        <a href={`https://filscout.io/en/pc/account?id=${miner.id}`}>filscout</a>
+                    )
+        </div>
+        </div>
 
-            <div>
-                <div className='grid'>
-                    {
-                        miner.deposits &&
-                        <div className="summary col-sm">
-                            <div className="summary-title">
-                                {miner.deposits.collateral || 0} FIL
-                            </div>
-                            <div className="summary-desc">
-                                Collateral
-                            </div>
-                        </div>
-                    }
-                    {
-                        miner.deposits &&
-                        <div className="summary col-sm">
-                            <div className="summary-title">
-                                {miner.deposits.available || 0} FIL
-                            </div>
-                            <div className="summary-desc">
-                                Available
-                            </div>
-                        </div>
-                    }
-                    {
-                        miner.deposits &&
-                        <div className="summary col-sm">
-                            <div className="summary-title">
-                                {miner.deposits.locked || 0} FIL
-                            </div>
-                            <div className="summary-desc">
-                                Locked
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
+        <div id="deposits" className="section">
+        <div className='grid'>
+        {
+            miner.deposits &&
+            <Summary
+                title={f(miner.deposits.collateral || 0)}
+                desc="Collateral" />
+        }
 
-            <div>
-                <div className='row'>
-                    <div className='col'>
-                        <h3>Sectors</h3>
+        {
+            miner.deposits &&
+            <Summary
+                title={f(miner.deposits.available || 0)}
+                desc="Available" />
+        }
+
+        {
+            miner.deposits &&
+            <Summary
+                title={f(miner.deposits.locked || 0)}
+                desc="Locked" />
+        }
+        </div>
+        </div>
+
+        <div id="sectors">
+        <div className='grid'>
+        {
+            miner.deadlines &&
+            <Summary
+            title={f(miner.deadlines.SectorsCount || 0)}
+            desc="Live Sectors" />
+        }
+        {
+            miner.deadlines &&
+            <Summary
+            title={f(miner.deadlines.SectorsCount || 0)}
+            desc="Live Sectors" />
+        }
+        {
+            miner.preCommits &&
+            <Summary
+            title={f(miner.preCommits.Count || 0)}
+            desc="PreCommits" />
+        }
+        {
+            miner.deadlines &&
+            <Summary
+            title={f(miner.deadlines.ActiveCount || 0)}
+            desc="Active Sectors" />
+        }
+        {
+            miner.deadlines &&
+            <Summary
+            title={f(miner.deadlines.FaultsCount || 0)}
+            desc="PoSt Faults" />
+        }
+        </div>
+        </div>
+
+        <div id="wpost" className="section">
+        <div className='row'>
+        <div className='col'>
+        <h3>WindowPoSt due</h3>
+        </div>
+        </div>
+        <div className="deadlines windowpost">
+        {
+            miner.deadlines && miner.deadlines.nextDeadlines.map(d =>
+                <div className={d.TotalSectors === 0 ? 'deadline opacity5' : 'deadline'}>
+
+                    <div className="out">
+                        In {d.Close - head.Height}
+                        {/* <span className="epochs">epochs</span> */}
                     </div>
-                </div>
-                <div className='row'>
-                    {
-                        miner.sectors &&
-                        <div className='col'>
-                            <h2>{miner.sectors.sectorsCount}</h2>
-                            Sectors
+                    <div className="hddWrapper">
+                        <div className='in'>
+                            {Math.round(d.TotalSectors * 32 /1024)} TiB
+
                         </div>
-                    }
-                </div>
-            </div>
+                        <div className="hdds">
+                            {
+                                [...Array(
+                                    Math.ceil(
+                                        Math.round(d.TotalSectors * 32 /1024 - +d.FaultyPower.Raw / (1024*1024*1024*1024))/8
+                                    ))].map(v => <div className='hdd'></div>)
+                            }
+                            {
+                                [...Array(Math.ceil(Math.round(+d.FaultyPower.Raw/(1024*1024*1024*1024))/8))].map(v =>
+                                    <div className='hdd faulty'></div>
+                                )
+                            }
 
-            <div>
-                <div className='row'>
-                    <div className='col'>
-                        <h3>WindowPoSt </h3>
+                        </div>
                     </div>
-                </div>
-                <div className="deadlines windowpost">
-                    {
-                        miner.deadlines && miner.deadlines.nextDeadlines.map(d =>
-                            <div className='deadline'>
-                                <div className="out">
-                                    In {d.Close - head.Height}
-                                    {/* <span className="epochs">epochs</span> */}
-                                </div>
-                                <div className='in'>
-                                    {Math.round(d.TotalSectors * 32 /1024)} TiB
-                                </div>
-                                <div className="hdds">
-                                    {
-                                        [...Array(Math.ceil(Math.round(d.TotalSectors * 32 /1024)/8))].map(v =>
-                                            <div className='hdd'></div>
-                                        )
-                                    }
-                                </div>
-                                {/* <div className="partitions">
-                                    {
-                                    [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
-                                    <div className='partition'></div>
-                                    )
-                                    }
-                                    </div> */}
-                            </div>
-                        )
-                    }
-
-                </div>
-                <div className='row'>
-                    <div className='col'>
-                        <h3>ProveCommit</h3>
-                    </div>
-                </div>
-                <div className="deadlines provecommit">
-                    {
-                        miner.preCommitDeadlines && miner.preCommitDeadlines.map(d =>
-                            <div className='deadline'>
-                                <div className="out">
-                                    In {d.Expiry - head.Height}
-                                    {/* <span className="epochs">epochs</span> */}
-                                </div>
-                                <div className='in'>
-                                    {Math.round(d.Sectors.length * 32 )} GiB
-                                </div>
-                                <div className="hdds">
-                                    {
-                                        [...Array(Math.ceil(Math.round(d.Sectors.length)))].map(v =>
-                                            <div className='hdd'></div>
-                                        )
-                                    }
-                                </div>
-                                {/* <div className="partitions">
-                                    {
-                                    [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
-                                    <div className='partition'></div>
-                                    )
-                                    }
-                                    </div> */}
-                            </div>
-                        )
-                    }
-
-                </div>
-                <div className='row'>
-                    <div className='col'>
+                    {/* <div className="partitions">
                         {
-                            miner.deadlines &&
-                            <div className='row'>
-                                {
-                                    miner.deadlines.nextDeadlines.slice(0,10).map(d =>
-                                        <div className='container'>
-                                            <div className='row'>
-                                                <div className='col-2'>
-                                                    In {(d.Close - head.Height)} epochs
-                                                </div>
-                                                <div className='col'>
-                                                    WindowPoSt in  epochs {(d.Close - head.Height)*30/60/60}h
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )
-                                }
-                            </div>
+                        [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
+                        <div className='partition'></div>
+                        )
                         }
+                        </div> */}
+                </div>
+            )
+        }
+
+        </div>
+        </div>
+        <div id="provecommit" className="section">
+        <div className='row'>
+        <div className='col'>
+        <h3>ProveCommits due</h3>
+        </div>
+        </div>
+        <div className="deadlines provecommit">
+        {
+            miner.preCommits && miner.preCommits.PreCommitDeadlines.map(d =>
+                <div className='deadline'>
+                    <div className="out">
+                        In {d.Expiry - head.Height}
+                        {/* <span className="epochs">epochs</span> */}
                     </div>
-                    <div className='col'>
+                    <div className="hddWrapper">
+                        <div className='in'>
+                            {Math.round(d.Sectors.length )} sectors
+                        </div>
+                        <div className="hdds">
+                            {
+                                d.Sectors.map(v =>
+                                    <div id={v} className={`hdd ${!!miner.sectors && !!miner.sectors.Sectors[v]}`}>{v == 215428 ? miner.sectors && miner.sectors.Sectors[v]  : ''}</div>
+                                )
+                            }
+                        </div>
+                    </div>
+                    {/* <div className="partitions">
                         {
-                            miner.preCommitDeadlines &&
-                            <div className='row'>
-                                {
-                                    miner.preCommitDeadlines.slice(0,10).map(d =>
-                                        <div className='container'>
-                                            <div className='row'>
-                                                <div className='col-2'>
-                                                    in {(d.Expiry - head.Height)} epochs
-                                                </div>
-                                                <div className='col'>
-                                                    {d.Sectors.length} Prove Commits  {(d.Expiry - head.Height)*30/60/60}h
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )
-                                }
-                            </div>
+                        [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
+                        <div className='partition'></div>
+                        )
                         }
-                    </div>
+                        </div> */}
+                </div>
+            )
+        }
+
                 </div>
             </div>
         </div>

@@ -91,18 +91,31 @@ export const fetchDeadlines = async (hash, head) => {
         .map((_, i) => ({
           ...deadlines[(deadline.Index + i) % 48],
           Close: deadline.Close + i * 60}))
-        .filter(d => d.TotalSectors)
+        // .filter(d => d.TotalSectors)
         .map(({Close, LiveSectors, TotalSectors, FaultyPower}) => ({Close, LiveSectors, TotalSectors, FaultyPower}))
 
-  return {nextDeadlines}
+  const SectorsCount = deadlines
+        .map(d => +d.LiveSectors)
+        .reduce((acc, curr) => acc + curr, 0)
+
+  const FaultsCount = deadlines
+        .map(d => +d.FaultyPower.Raw)
+        .reduce((acc, curr) => acc + curr, 0) / (32*1024*1024*1024)
+
+  return {
+    nextDeadlines,
+    SectorsCount,
+    FaultsCount,
+    ActiveCount: SectorsCount - FaultsCount
+  }
 }
 
 export const fetchPreCommittedSectors = async (hash, head) => {
   const preCommittedSectors = await getData(head, `@Ha:${hash}/1/5`, preCommitSchema)
-  const preCommitDeadlines = d3.groups(
+  const PreCommitDeadlines = d3.groups(
     Object.keys(preCommittedSectors)
       .map(d => ({
-        SectorNumber: +d,
+        SectorNumber: preCommittedSectors[d].info.sector_number,
         Expiry: preCommittedSectors[d].precommit_epoch + (10000+1)
       })),
     d => d.Expiry)
@@ -112,14 +125,14 @@ export const fetchPreCommittedSectors = async (hash, head) => {
         }))
         .sort((a, b) => a.Expiry - b.Expiry)
 
-  return preCommitDeadlines
+  return {PreCommitDeadlines, Count:  Object.keys(preCommittedSectors).length}
 }
 
 export const fetchSectors = async (hash, head) => {
-  const sectors = (
-    await client.StateMinerSectors(hash, null, null, head.Cids)
-  ).reduce((acc, curr) => {
-    acc[curr.ID] = { number: curr.ID, state: 'committed' }
+  const sectorList = await client.StateMinerSectors(hash, null, null, head.Cids)
+  console.log('saved', sectorList.filter(v => v === 215428))
+  const Sectors = sectorList.reduce((acc, curr) => {
+    acc[curr.ID] = { number: curr.ID, state: 'committed', info: curr }
     return acc
   }, {})
 
@@ -138,7 +151,8 @@ export const fetchSectors = async (hash, head) => {
   //   return acc
   // }, {})
 
-  const sectorsCount = Object.keys(sectors).length
+  const sectorsCount = Object.keys(Sectors).length
+  console.log('got sectors', Sectors)
 
-  return { sectorsCount }
+  return { sectorsCount, Sectors }
 }
