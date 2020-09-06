@@ -97,7 +97,6 @@ const Summary = ({condition, title, desc}) => {
 
 const Miner = () => {
     let { minerId } = useParams();
-    console.log('bootstrap ', minerId)
 
     const [head, setHead] = useState()
     const [miners, setMiners] = useState()
@@ -164,10 +163,6 @@ const Miner = () => {
 
         return () => { mounted = false }
     }, [head, minerId])
-
-    useEffect(() => {
-        console.log('spacegap', 'miner has changed', miner)
-    }, [miner])
 
     useEffect(() => {
         if (canvasRef.current) {

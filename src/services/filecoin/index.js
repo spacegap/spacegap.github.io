@@ -130,9 +130,8 @@ export const fetchPreCommittedSectors = async (hash, head) => {
 
 export const fetchSectors = async (hash, head) => {
   const sectorList = await client.StateMinerSectors(hash, null, null, head.Cids)
-  console.log('saved', sectorList.filter(v => v === 215428))
   const Sectors = sectorList.reduce((acc, curr) => {
-    acc[curr.ID] = { number: curr.ID, state: 'committed', info: curr }
+    acc[curr.ID] = { number: curr.ID, info: curr }
     return acc
   }, {})
 
@@ -152,7 +151,6 @@ export const fetchSectors = async (hash, head) => {
   // }, {})
 
   const sectorsCount = Object.keys(Sectors).length
-  console.log('got sectors', Sectors)
 
   return { sectorsCount, Sectors }
 }
