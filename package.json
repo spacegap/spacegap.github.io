@@ -6,6 +6,7 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
+    "blockies-identicon": "^0.1.0",
     "bootstrap": "^4.5.2",
     "d3": "^6.0.0",
     "js-hamt-filecoin": "0.0.17",
