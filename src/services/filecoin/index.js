@@ -116,7 +116,7 @@ export const fetchPreCommittedSectors = async (hash, head) => {
     Object.keys(preCommittedSectors)
       .map(d => ({
         SectorNumber: preCommittedSectors[d].info.sector_number,
-        Expiry: preCommittedSectors[d].precommit_epoch + (10000+1)
+        Expiry: preCommittedSectors[d].precommit_epoch + (10000+60)
       })),
     d => d.Expiry)
         .map(([Expiry, Sectors]) => ({
