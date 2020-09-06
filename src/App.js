@@ -240,18 +240,6 @@ const Miner = () => {
         {
             miner.deadlines &&
             <Summary
-            title={f(miner.deadlines.SectorsCount || 0)}
-            desc="Live Sectors" />
-        }
-        {
-            miner.preCommits &&
-            <Summary
-            title={f(miner.preCommits.Count || 0)}
-            desc="PreCommits" />
-        }
-        {
-            miner.deadlines &&
-            <Summary
             title={f(miner.deadlines.ActiveCount || 0)}
             desc="Active Sectors" />
         }
@@ -260,6 +248,12 @@ const Miner = () => {
             <Summary
             title={f(miner.deadlines.FaultsCount || 0)}
             desc="PoSt Faults" />
+        }
+        {
+            miner.preCommits &&
+            <Summary
+                title={f(miner.preCommits.Count || 0)}
+                desc="PreCommits" />
         }
         </div>
         </div>
