@@ -5,7 +5,6 @@ import {
     Switch,
     Route,
     Link,
-    useRouteMatch,
     useParams
 } from "react-router-dom";
 import {
@@ -19,7 +18,7 @@ import {
 import Blockies from 'blockies-identicon'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './App.scss'
-
+import asyncPool from "tiny-async-pool";
 const d3 = require('d3')
 const f = d3.format(',')
 
@@ -81,18 +80,14 @@ function Full () {
         let mounted = true
         if (!head) return
 
-        Object.keys(miners)
-              .map(d => miners[d].address)
-              .forEach(minerId => {
-                  console.log('get', minerId)
-                  fetchDeadlines(minerId, head).then(deadlines => {
-                      console.log('get', minerId)
-                      if (mounted) {
-                          minersDeadlines[minerId] = deadlines
-                          setMinersDeadlines({...minersDeadlines})
-                      }
-                  })
-              })
+        const minersList = Object.keys(miners).slice(0, 50).map(d => miners[d].address)
+        asyncPool(5, minersList, async minerId => {
+            if (!mounted) return;
+            const deadlines = await fetchDeadlines(minerId, head)
+            if (!mounted) return;
+            minersDeadlines[minerId] = deadlines
+            return await setMinersDeadlines({...minersDeadlines})
+        })
 
         return () => { mounted = false }
     }, [head, miners])
@@ -103,11 +98,13 @@ function Full () {
 
     return (
         <section id='LookUp' className='container'>
-Full
+            Listing WindowPoSt duties of the top 50 miners.
             {miners && Object.keys(miners).slice(0, 50).map(d =>
                 <div>
                     <Link to={`/miners/${miners[d].address}`}>{miners[d].address}</Link>
-                    {JSON.stringify(minersDeadlines[miners[d].address])}
+
+                    <WindowPoSt deadlines={minersDeadlines[miners[d].address]} head={head} />
+
                 </div>
             )}
         </section>
@@ -125,14 +122,18 @@ function Home () {
     }, [])
 
     return (
-        <section id='LookUp' className='container'>
-            Dashboard for Proof-of-Space mining
-
-            {miners && Object.keys(miners).slice(0, 50).map(d =>
-                <div>
-                    <Link to={`/miners/${miners[d].address}`}>{miners[d].address}</Link>
-                </div>
-            )}
+        <section id='home' className='container'>
+            <div class="spacerace">
+                Top miners:
+                {miners && Object.keys(miners).slice(0, 5).map((d, i) =>
+                    <div>
+                        {i+1}. <Link to={`/miners/${miners[d].address}`}>{miners[d].address}</Link>
+                    </div>
+                )}
+            </div>
+            <div>
+                See deadlines of <Link to={`/full`}>top 50 miners</Link> or click on individual miners.
+            </div>
         </section>
     )
 }
@@ -154,6 +155,52 @@ const Summary = ({condition, title, desc}) => {
             <div className="summary-desc">
                 {desc}
             </div>
+        </div>
+    )
+}
+
+const WindowPoSt = ({deadlines, head}) => {
+    return (
+        <div className="deadlines windowpost">
+            {
+                deadlines && deadlines.nextDeadlines.map(d =>
+                    <div className={d.TotalSectors === 0 ? 'deadline opacity5' : 'deadline'}>
+
+                        <div className="out">
+                            In {d.Close - head.Height}
+                            {/* <span className="epochs">epochs</span> */}
+                        </div>
+                        <div className="hddWrapper">
+                            <div className='in'>
+                                {Math.round(d.TotalSectors * 32 /1024)} TiB
+
+                            </div>
+                            <div className="hdds">
+                                {
+                                    [...Array(
+                                        Math.ceil(
+                                            Math.round(d.TotalSectors * 32 /1024 - +d.FaultyPower.Raw / (1024*1024*1024*1024))/8
+                                        ))].map(v => <div className='hdd'></div>)
+                                }
+                                {
+                                    [...Array(Math.ceil(Math.round(+d.FaultyPower.Raw/(1024*1024*1024*1024))/8))].map(v =>
+                                        <div className='hdd faulty'></div>
+                                    )
+                                }
+
+                            </div>
+                        </div>
+                        {/* <div className="partitions">
+                            {
+                            [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
+                            <div className='partition'></div>
+                            )
+                            }
+                            </div> */}
+                    </div>
+                )
+            }
+
         </div>
     )
 }
@@ -261,6 +308,12 @@ const Miner = () => {
                         <a href={`https://filscout.io/en/pc/account?id=${miner.id}`}>filscout</a>
                     )
                 </div>
+                <div>
+                    {
+                        head &&
+                        <span>Height <a href={`https://filfox.info/en/tipset/${head.Height}`}>{head.Height}</a></span>
+                    }
+                </div>
             </div>
 
             <div id="deposits" className="section">
@@ -317,7 +370,7 @@ const Miner = () => {
                 </div>
             </div>
 
-            <div id="wpost" className="section">
+            <div className="section wpost">
                 <div className='row'>
                     <div className='col section-title'>
                         <h3>WindowPoSt due</h3>
@@ -327,47 +380,7 @@ const Miner = () => {
                         </ReactTooltip>
                     </div>
                 </div>
-                <div className="deadlines windowpost">
-                    {
-                        miner.deadlines && miner.deadlines.nextDeadlines.map(d =>
-                            <div className={d.TotalSectors === 0 ? 'deadline opacity5' : 'deadline'}>
-
-                                <div className="out">
-                                    In {d.Close - head.Height}
-                                    {/* <span className="epochs">epochs</span> */}
-                                </div>
-                                <div className="hddWrapper">
-                                    <div className='in'>
-                                        {Math.round(d.TotalSectors * 32 /1024)} TiB
-
-                                    </div>
-                                    <div className="hdds">
-                                        {
-                                            [...Array(
-                                                Math.ceil(
-                                                    Math.round(d.TotalSectors * 32 /1024 - +d.FaultyPower.Raw / (1024*1024*1024*1024))/8
-                                                ))].map(v => <div className='hdd'></div>)
-                                        }
-                                        {
-                                            [...Array(Math.ceil(Math.round(+d.FaultyPower.Raw/(1024*1024*1024*1024))/8))].map(v =>
-                                                <div className='hdd faulty'></div>
-                                            )
-                                        }
-
-                                    </div>
-                                </div>
-                                {/* <div className="partitions">
-                                    {
-                                    [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
-                                    <div className='partition'></div>
-                                    )
-                                    }
-                                    </div> */}
-                            </div>
-                        )
-                    }
-
-                </div>
+                <WindowPoSt deadlines={miner.deadlines} head={head} />
             </div>
             <div id="provecommit" className="section">
                 <div className='row'>
@@ -399,13 +412,6 @@ const Miner = () => {
                                         }
                                     </div>
                                 </div>
-                                {/* <div className="partitions">
-                                    {
-                                    [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
-                                    <div className='partition'></div>
-                                    )
-                                    }
-                                    </div> */}
                             </div>
                         )
                     }
