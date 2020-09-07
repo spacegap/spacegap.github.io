@@ -107,13 +107,13 @@ h3 {
 .section {
     margin-top: 20px;
     margin-bottom: 40px;
-    .section-title {
-        display: flex;
-        a {
-            margin-left: 20px;
-            margin-top: 4px;
-            font-size: 0.9em;
-        }
+}
+.section-title {
+    display: flex;
+    a {
+        margin-left: 20px;
+        margin-top: 4px;
+        font-size: 0.9em;
     }
 }
 
