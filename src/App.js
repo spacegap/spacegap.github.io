@@ -44,14 +44,76 @@ function App () {
                             <Miner />
                         </section>
                     </Route>
+                    <Route path='/full'>
+                        <Full />
+                    </Route>
                     <Route path='/'>
                         <Home />
                     </Route>
+
                 </Switch>
             </div>
         </Router>
     )
 }
+
+function Full () {
+    const [miners, setMiners] = useState({})
+    const [minersDeadlines, setMinersDeadlines] = useState({})
+    const [head, setHead] = useState()
+
+    useEffect(() => {
+        getMiners().then(res => {
+            setMiners(res)
+        })
+    }, [])
+
+    useEffect(() => {
+        const fetchingHead = async () => {
+            const fetched = await fetchHead()
+            setHead(fetched)
+        }
+        fetchingHead()
+    }, [])
+
+
+    useEffect(() => {
+        let mounted = true
+        if (!head) return
+
+        Object.keys(miners)
+              .map(d => miners[d].address)
+              .forEach(minerId => {
+                  console.log('get', minerId)
+                  fetchDeadlines(minerId, head).then(deadlines => {
+                      console.log('get', minerId)
+                      if (mounted) {
+                          minersDeadlines[minerId] = deadlines
+                          setMinersDeadlines({...minersDeadlines})
+                      }
+                  })
+              })
+
+        return () => { mounted = false }
+    }, [head, miners])
+
+    useEffect(() => {
+        console.log(minersDeadlines)
+    }, [minersDeadlines])
+
+    return (
+        <section id='LookUp' className='container'>
+Full
+            {miners && Object.keys(miners).slice(0, 50).map(d =>
+                <div>
+                    <Link to={`/miners/${miners[d].address}`}>{miners[d].address}</Link>
+                    {JSON.stringify(minersDeadlines[miners[d].address])}
+                </div>
+            )}
+        </section>
+    )
+}
+
 
 function Home () {
     const [miners, setMiners] = useState()
@@ -115,7 +177,8 @@ const Miner = () => {
             setHead(fetched)
         }
         fetchingHead()
-        setInterval(() => fetchingHead(), 30000)
+        const interval = setInterval(() => fetchingHead(), 30000)
+        return () => clearInterval(interval)
     }, [])
 
     const canvasRef = React.useRef(null)
