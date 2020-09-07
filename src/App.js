@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import ReactTooltip from 'react-tooltip';
 import {
     HashRouter as Router,
     Switch,
@@ -34,7 +35,7 @@ function App () {
             <div className='App'>
                 <header className='container-fluid'>
                     <Link to="/">
-                        <h1 id="logo" className='logo'>spacegap</h1>
+                        <h1 id="logo" className='logo'><span>spacegap</span></h1>
                     </Link>
                 </header>
                 <Switch>
@@ -196,147 +197,155 @@ const Miner = () => {
                         <a href={`https://filscan.io/#/tipset/address-detail?address=${miner.identicon}`}>filscan</a>,&nbsp;
                         <a href={`https://filscout.io/en/pc/account?id=${miner.id}`}>filscout</a>
                     )
-        </div>
-        </div>
-
-        <div id="deposits" className="section">
-        <div className='grid'>
-        {
-            miner.deposits &&
-            <Summary
-                title={f(miner.deposits.collateral || 0)}
-                desc="Collateral" />
-        }
-
-        {
-            miner.deposits &&
-            <Summary
-                title={f(miner.deposits.available || 0)}
-                desc="Available" />
-        }
-
-        {
-            miner.deposits &&
-            <Summary
-                title={f(miner.deposits.locked || 0)}
-                desc="Locked" />
-        }
-        </div>
-        </div>
-
-        <div id="sectors">
-        <div className='grid'>
-        {
-            miner.deadlines &&
-            <Summary
-            title={f(miner.deadlines.SectorsCount || 0)}
-            desc="Live Sectors" />
-        }
-        {
-            miner.deadlines &&
-            <Summary
-            title={f(miner.deadlines.ActiveCount || 0)}
-            desc="Active Sectors" />
-        }
-        {
-            miner.deadlines &&
-            <Summary
-            title={f(miner.deadlines.FaultsCount || 0)}
-            desc="PoSt Faults" />
-        }
-        {
-            miner.preCommits &&
-            <Summary
-                title={f(miner.preCommits.Count || 0)}
-                desc="PreCommits" />
-        }
-        </div>
-        </div>
-
-        <div id="wpost" className="section">
-        <div className='row'>
-        <div className='col'>
-        <h3>WindowPoSt due</h3>
-        </div>
-        </div>
-        <div className="deadlines windowpost">
-        {
-            miner.deadlines && miner.deadlines.nextDeadlines.map(d =>
-                <div className={d.TotalSectors === 0 ? 'deadline opacity5' : 'deadline'}>
-
-                    <div className="out">
-                        In {d.Close - head.Height}
-                        {/* <span className="epochs">epochs</span> */}
-                    </div>
-                    <div className="hddWrapper">
-                        <div className='in'>
-                            {Math.round(d.TotalSectors * 32 /1024)} TiB
-
-                        </div>
-                        <div className="hdds">
-                            {
-                                [...Array(
-                                    Math.ceil(
-                                        Math.round(d.TotalSectors * 32 /1024 - +d.FaultyPower.Raw / (1024*1024*1024*1024))/8
-                                    ))].map(v => <div className='hdd'></div>)
-                            }
-                            {
-                                [...Array(Math.ceil(Math.round(+d.FaultyPower.Raw/(1024*1024*1024*1024))/8))].map(v =>
-                                    <div className='hdd faulty'></div>
-                                )
-                            }
-
-                        </div>
-                    </div>
-                    {/* <div className="partitions">
-                        {
-                        [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
-                        <div className='partition'></div>
-                        )
-                        }
-                        </div> */}
                 </div>
-            )
-        }
+            </div>
 
-        </div>
-        </div>
-        <div id="provecommit" className="section">
-        <div className='row'>
-        <div className='col'>
-        <h3>ProveCommits due</h3>
-        </div>
-        </div>
-        <div className="deadlines provecommit">
-        {
-            miner.preCommits && miner.preCommits.PreCommitDeadlines.map(d =>
-                <div className='deadline'>
-                    <div className="out">
-                        In {d.Expiry - head.Height}
-                        {/* <span className="epochs">epochs</span> */}
-                    </div>
-                    <div className="hddWrapper">
-                        <div className='in'>
-                            {Math.round(d.Sectors.length )} sectors
-                        </div>
-                        <div className="hdds">
-                            {
-                                d.Sectors.map(v =>
-                                    <div id={v} className={`hdd ${!!miner.sectors && !!miner.sectors.Sectors[v]}`}>{v == 215428 ? miner.sectors && miner.sectors.Sectors[v]  : ''}</div>
-                                )
-                            }
-                        </div>
-                    </div>
-                    {/* <div className="partitions">
-                        {
-                        [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
-                        <div className='partition'></div>
-                        )
-                        }
-                        </div> */}
+            <div id="deposits" className="section">
+                <div className='grid'>
+                    {
+                        miner.deposits &&
+                        <Summary
+                            title={f(miner.deposits.collateral || 0)}
+                            desc="Collateral" />
+                    }
+
+                    {
+                        miner.deposits &&
+                        <Summary
+                            title={f(miner.deposits.available || 0)}
+                            desc="Available" />
+                    }
+
+                    {
+                        miner.deposits &&
+                        <Summary
+                            title={f(miner.deposits.locked || 0)}
+                            desc="Locked" />
+                    }
                 </div>
-            )
-        }
+            </div>
+
+            <div id="sectors">
+                <div className='grid'>
+                    {
+                        miner.deadlines &&
+                        <Summary
+                            title={f(miner.deadlines.SectorsCount || 0)}
+                            desc="Live Sectors" />
+                    }
+                    {
+                        miner.deadlines &&
+                        <Summary
+                            title={f(miner.deadlines.ActiveCount || 0)}
+                            desc="Active Sectors" />
+                    }
+                    {
+                        miner.deadlines &&
+                        <Summary
+                            title={f(miner.deadlines.FaultsCount || 0)}
+                            desc="Faulty Sectors" />
+                    }
+                    {
+                        miner.preCommits &&
+                        <Summary
+                            title={f(miner.preCommits.Count || 0)}
+                            desc="PreCommits" />
+                    }
+                </div>
+            </div>
+
+            <div id="wpost" className="section">
+                <div className='row'>
+                    <div className='col section-title'>
+                        <h3>WindowPoSt due</h3>
+                        <a data-tip data-for='wpost-desc'>(what is this?)</a>
+                        <ReactTooltip id='wpost-desc' effect='solid' place='top'>
+                            <span>List of 48 WindoPoSt submission deadlines ordered by due time (in epochs).<br/>Bars represent ~8TB disks to be proven, white are healthy disks, red are faulty.</span>
+                        </ReactTooltip>
+                    </div>
+                </div>
+                <div className="deadlines windowpost">
+                    {
+                        miner.deadlines && miner.deadlines.nextDeadlines.map(d =>
+                            <div className={d.TotalSectors === 0 ? 'deadline opacity5' : 'deadline'}>
+
+                                <div className="out">
+                                    In {d.Close - head.Height}
+                                    {/* <span className="epochs">epochs</span> */}
+                                </div>
+                                <div className="hddWrapper">
+                                    <div className='in'>
+                                        {Math.round(d.TotalSectors * 32 /1024)} TiB
+
+                                    </div>
+                                    <div className="hdds">
+                                        {
+                                            [...Array(
+                                                Math.ceil(
+                                                    Math.round(d.TotalSectors * 32 /1024 - +d.FaultyPower.Raw / (1024*1024*1024*1024))/8
+                                                ))].map(v => <div className='hdd'></div>)
+                                        }
+                                        {
+                                            [...Array(Math.ceil(Math.round(+d.FaultyPower.Raw/(1024*1024*1024*1024))/8))].map(v =>
+                                                <div className='hdd faulty'></div>
+                                            )
+                                        }
+
+                                    </div>
+                                </div>
+                                {/* <div className="partitions">
+                                    {
+                                    [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
+                                    <div className='partition'></div>
+                                    )
+                                    }
+                                    </div> */}
+                            </div>
+                        )
+                    }
+
+                </div>
+            </div>
+            <div id="provecommit" className="section">
+                <div className='row'>
+                    <div className='col section-title'>
+                        <h3>ProveCommits due</h3>
+                        <a data-tip data-for='provecommit-desc'>(what is this?)</a>
+                        <ReactTooltip id='provecommit-desc' effect='solid' place='top'>
+                            <span>List of ProveCommits ordered by due time (in epochs).<br/>Circles represent sectors to be proven.</span>
+                        </ReactTooltip>
+                    </div>
+                </div>
+                <div className="deadlines provecommit">
+                    {
+                        miner.preCommits && miner.preCommits.PreCommitDeadlines.map(d =>
+                            <div className='deadline'>
+                                <div className="out">
+                                    In {d.Expiry - head.Height}
+                                    {/* <span className="epochs">epochs</span> */}
+                                </div>
+                                <div className="hddWrapper">
+                                    <div className='in'>
+                                        {Math.round(d.Sectors.length )} sectors
+                                    </div>
+                                    <div className="hdds">
+                                        {
+                                            d.Sectors.map(v =>
+                                                <div id={v} className={`hdd ${!!miner.sectors && !!miner.sectors.Sectors[v]}`}>{v == 215428 ? miner.sectors && miner.sectors.Sectors[v]  : ''}</div>
+                                            )
+                                        }
+                                    </div>
+                                </div>
+                                {/* <div className="partitions">
+                                    {
+                                    [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
+                                    <div className='partition'></div>
+                                    )
+                                    }
+                                    </div> */}
+                            </div>
+                        )
+                    }
 
                 </div>
             </div>

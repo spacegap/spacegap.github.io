@@ -12,6 +12,7 @@
 /*   color: white; */
 /* } */
 
+
 .Circle {
     height: 20px;
     width: 20px;
@@ -106,6 +107,14 @@ h3 {
 .section {
     margin-top: 20px;
     margin-bottom: 40px;
+    .section-title {
+        display: flex;
+        a {
+            margin-left: 20px;
+            margin-top: 4px;
+            font-size: 0.9em;
+        }
+    }
 }
 
 .miner-name {
@@ -123,7 +132,13 @@ h3 {
     font-size: 30px;
     text-align: center;
     margin-top: 100px;
+    /* span { */
+    /*     background: linear-gradient(to top right,#0c50ff 0,#0c50ff 24%,#5b9dff 55.73%,#ff74f1 75%,#ff74f1 100%); */
+    /*     -webkit-background-clip: text; */
+    /*     -webkit-text-fill-color: transparent; */
+    /* } */
 }
+
 
 .grid {
     display: grid;
