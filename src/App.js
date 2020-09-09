@@ -8,6 +8,7 @@ import {
     useParams
 } from "react-router-dom";
 import Filecoin from './services/filecoin'
+import Drand from './services/drand'
 import Blockies from 'blockies-identicon'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './App.scss'
@@ -23,9 +24,11 @@ function getFilecoinExpectedHeight () {
 function App () {
     const [miners, setMiners] = useState()
     const [head, setHead] = useState()
+    const [round, setRound] = useState()
     const [node, setNode] = useState('wss://lotus.jimpick.com/spacerace_api/0/node/rpc/v0')
     const [client, setFilClient] = useState(new Filecoin(node))
     const [filExpectedHeight, setFilExpectedHeight] = useState(getFilecoinExpectedHeight())
+    const [spa, setSpa] = useState()
 
     useEffect(() => {
         const reload = async () => {
@@ -37,6 +40,14 @@ function App () {
     }, [node])
 
     useEffect(() => {
+        if (!head) return 
+
+        client.fetchPower(head).then(power => {
+            setSpa(power)
+        })
+    }, [head])
+
+    useEffect(() => {
         let mounted = true
 
         client.getMiners().then(res => {
@@ -45,16 +56,27 @@ function App () {
         })
 
         const fetchingHead = async () => {
-            const fetched = await client.fetchHead()
-            if (!mounted) return
-            console.log('new block', fetched.Height)
+            client.fetchHead().then(fetched => {
+                if (!mounted) return
+                console.log('new block', fetched.Height)
+                setHead(fetched)
+            })
+
+            Drand().then(fetched => {
+                if (!mounted) return
+                console.log('new drand', fetched)
+                setRound(fetched)
+            })
+
             setFilExpectedHeight(getFilecoinExpectedHeight())
-            setHead(fetched)
         }
 
         fetchingHead()
 
-        const interval = setInterval(() => fetchingHead(), 30000)
+        const interval = setInterval(() => {
+            fetchingHead()
+        }, 30000)
+
         return () => {
             mounted = false
             clearInterval(interval)
@@ -195,45 +217,45 @@ const WindowPoSt = ({deadlines, head}) => {
     return (
         <div className="deadlines windowpost">
             {
-                deadlines && deadlines.nextDeadlines.map((d, i) =>
-                    <div key={i} className={d.TotalSectors === 0 ? 'deadline opacity5' : 'deadline'}>
+            deadlines && deadlines.nextDeadlines.map((d, i) =>
+            <div key={i} className={d.TotalSectors === 0 ? 'deadline opacity5' : 'deadline'}>
 
-                        <div className="out">
-                            In {d.Close - head.Height}
-                            {/* <span className="epochs">epochs</span> */}
-                        </div>
-                        <div className="hddWrapper">
-                            <div className='in'>
-                                {Math.round(d.TotalSectors * 32 /1024)} TiB
+                <div className="out">
+                    In {d.Close - head.Height}
+                    {/* <span className="epochs">epochs</span> */}
+                </div>
+                <div className="hddWrapper">
+                    <div className='in'>
+                        {Math.round(d.TotalSectors * 32 /1024)} TiB
 
-                            </div>
-                            <div className="hdds">
-                                {
-                                    [...Array(
-                                        Math.ceil(
-                                            Math.round(d.TotalSectors * 32 /1024 - +d.FaultyPower.Raw / (1024*1024*1024*1024))/8
-                                        ))].map((v, i) => <div key={i} className='hdd'></div>)
-                                }
-                                {
-                                    [...Array(Math.ceil(Math.round(+d.FaultyPower.Raw/(1024*1024*1024*1024))/8))].map((v, i) =>
-                                        <div key={i} className='hdd faulty'></div>
-                                    )
-                                }
-
-                            </div>
-                        </div>
-                        {/* <div className="partitions">
-                            {
-                            [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
-                            <div className='partition'></div>
-                            )
-                            }
-                            </div> */}
                     </div>
-                )
+                    <div className="hdds">
+                        {
+                        [...Array(
+                        Math.ceil(
+                        Math.round(d.TotalSectors * 32 /1024 - +d.FaultyPower.Raw / (1024*1024*1024*1024))/8
+                        ))].map((v, i) => <div key={i} className='hdd'></div>)
+                        }
+                        {
+                        [...Array(Math.ceil(Math.round(+d.FaultyPower.Raw/(1024*1024*1024*1024))/8))].map((v, i) =>
+                        <div key={i} className='hdd faulty'></div>
+                        )
+                        }
+
+                    </div>
+                </div>
+                {/* <div className="partitions">
+                    {
+                    [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
+                    <div className='partition'></div>
+                    )
+                    }
+                </div> */}
+            </div>
+            )
             }
 
-        </div>
+            </div>
     )
 }
 
@@ -260,9 +282,9 @@ const Miner = ({ client, miners, head }) => {
                     setMiner({...miner})
                 }
             })
-                  .catch(err => {
-                      console.error(err)
-                  })
+                   .catch(err => {
+                       console.error(err)
+                   })
 
             client.fetchDeposits(minerId, head).then(deposits => {
                 if (mounted) {
@@ -404,26 +426,26 @@ const Miner = ({ client, miners, head }) => {
                 </div>
                 <div className="deadlines provecommit">
                     {
-                        miner.preCommits && miner.preCommits.PreCommitDeadlines.map((d, i) =>
-                            <div key={i} className='deadline'>
-                                <div className="out">
-                                    In {d.Expiry - head.Height}
-                                    {/* <span className="epochs">epochs</span> */}
-                                </div>
-                                <div className="hddWrapper">
-                                    <div className='in'>
-                                        {Math.round(d.Sectors.length )} sectors
-                                    </div>
-                                    <div className="hdds">
-                                        {
-                                            d.Sectors.map(v =>
-                                                <div key={v} className={`hdd ${!!miner.sectors && !!miner.sectors.Sectors[v]}`}>{v === 215428 ? miner.sectors && miner.sectors.Sectors[v]  : ''}</div>
-                                            )
-                                        }
-                                    </div>
-                                </div>
+                    miner.preCommits && miner.preCommits.PreCommitDeadlines.map((d, i) =>
+                    <div key={i} className='deadline'>
+                        <div className="out">
+                            In {d.Expiry - head.Height}
+                            {/* <span className="epochs">epochs</span> */}
+                        </div>
+                        <div className="hddWrapper">
+                            <div className='in'>
+                                {Math.round(d.Sectors.length )} sectors
                             </div>
-                        )
+                            <div className="hdds">
+                                {
+                                d.Sectors.map(v =>
+                                <div key={v} className={`hdd ${!!miner.sectors && !!miner.sectors.Sectors[v]}`}>{v === 215428 ? miner.sectors && miner.sectors.Sectors[v]  : ''}</div>
+                                )
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    )
                     }
 
                 </div>

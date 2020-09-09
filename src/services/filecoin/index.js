@@ -2,6 +2,9 @@ import { LotusRPC } from '@filecoin-shipyard/lotus-client-rpc'
 import { BrowserProvider } from '@filecoin-shipyard/lotus-client-provider-browser'
 import Fil from 'js-hamt-filecoin'
 const d3 = require('d3')
+const bx = require('base-x')
+const BASE64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+const b64 = bx(BASE64)
 
 const f = d3.format('0.2f')
 
@@ -30,6 +33,14 @@ const preCommitSchema = ({
   },
 })
 
+function bytesToBig(p) {
+  let acc = 0n
+  for (let i = 0; i < p.length; i++) {
+    acc *= 256n
+    acc += window.BigInt(p[i])
+  }
+  return acc
+}
 
 export default class Filecoin {
   constructor(endpointUrl) {
@@ -55,6 +66,21 @@ export default class Filecoin {
 
   async fetchHead () {
     return await this.client.chainHead()
+  }
+
+  async fetchPower (head) {
+    const state = head.Blocks[0].ParentStateRoot['/']
+    const storagePowerActorRaw = (await this.client.chainGetNode(`${state}/@Ha:t04/1`)).Obj
+    return {
+      'TotalRawBytePower': bytesToBig(b64.decode(storagePowerActorRaw[0])),
+      'TotalBytesCommitted': bytesToBig(b64.decode(storagePowerActorRaw[1])),
+      'TotalQualityAdjPower': bytesToBig(b64.decode(storagePowerActorRaw[2])),
+      'TotalQABytesCommitted': bytesToBig(b64.decode(storagePowerActorRaw[3])),
+      'TotalPledgeCollateral': bytesToBig(b64.decode(storagePowerActorRaw[4])),
+      'ThisEpochRawBytePower': bytesToBig(b64.decode(storagePowerActorRaw[5])),
+      'ThisEpochQualityAdjPower': bytesToBig(b64.decode(storagePowerActorRaw[6])),
+      'ThisEpochPledgeCollateral': bytesToBig(b64.decode(storagePowerActorRaw[7])),
+    }
   }
 
   async fetchDeposits (hash, head) {
