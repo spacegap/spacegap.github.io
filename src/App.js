@@ -7,14 +7,7 @@ import {
     Link,
     useParams
 } from "react-router-dom";
-import {
-    fetchHead,
-    fetchSectors,
-    fetchDeadlines,
-    fetchPreCommittedSectors,
-    fetchDeposits,
-    getMiners
-} from './services/filecoin'
+import Filecoin from './services/filecoin'
 import Blockies from 'blockies-identicon'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './App.scss'
@@ -22,16 +15,74 @@ import asyncPool from "tiny-async-pool";
 const d3 = require('d3')
 const f = d3.format(',')
 
-function getJSONFromHistory (name) {
-    const prev = window.localStorage.getItem(name)
-    return prev && JSON.parse(prev)
+function getFilecoinExpectedHeight () {
+    const filGenesis = (new Date("2020-08-24 22:00:00Z")).getTime()
+    return Math.floor((Date.now() - filGenesis)/1000/30)
 }
 
 function App () {
+    const [miners, setMiners] = useState()
+    const [head, setHead] = useState()
+    const [node, setNode] = useState('wss://lotus.jimpick.com/spacerace_api/0/node/rpc/v0')
+    const [client, setFilClient] = useState(new Filecoin(node))
+    const [filExpectedHeight, setFilExpectedHeight] = useState(getFilecoinExpectedHeight())
+
+    useEffect(() => {
+        const reload = async () => {
+            await setHead()
+            await setFilClient(new Filecoin(node))
+        }
+
+        reload()
+    }, [node])
+
+    useEffect(() => {
+        let mounted = true
+
+        client.getMiners().then(res => {
+            if (!mounted) return
+            setMiners(res)
+        })
+
+        const fetchingHead = async () => {
+            const fetched = await client.fetchHead()
+            if (!mounted) return
+            console.log('new block', fetched.Height)
+            setFilExpectedHeight(getFilecoinExpectedHeight())
+            setHead(fetched)
+        }
+
+        fetchingHead()
+
+        const interval = setInterval(() => fetchingHead(), 30000)
+        return () => {
+            mounted = false
+            clearInterval(interval)
+        }
+    }, [client])
 
     return (
         <Router>
             <div className='App'>
+                <div className='container'>
+                    <div className='row'>
+                        <div className='col'>
+                            <select id="" name="" onChange={e => setNode(e.target.value)} value={node}>
+                                <option value='wss://lotus.jimpick.com/spacerace_api/0/node/rpc/v0'>Jim's node 0</option>
+                                <option value='wss://lotus.jimpick.com/spacerace_api/1/node/rpc/v0'>Jim's node 1</option>
+                                <option value='ws://www.border.ninja:12342/node/rpc/v0'>Border's node</option>
+                                <option value='wss://node.glif.io/space07/lotus/rpc/v0'>Glif's node</option>
+                            </select>
+                            {
+                                head &&
+                                <>
+                                    <span>Current Tipset <a href={`https://filfox.info/en/tipset/${head.Height}`}>{head.Height}</a></span>
+                                    <span>Expected Tipset <a href={`https://filfox.info/en/tipset/${filExpectedHeight}`}>{filExpectedHeight}</a></span>
+                                </>
+                            }
+                        </div>
+                    </div>
+                </div>
                 <header className='container-fluid'>
                     <Link to="/">
                         <h1 id="logo" className='logo'><span>spacegap</span></h1>
@@ -40,14 +91,14 @@ function App () {
                 <Switch>
                     <Route path='/miners/:minerId'>
                         <section className='container'>
-                            <Miner />
+                            <Miner client={client} miners={miners} head={head} />
                         </section>
                     </Route>
                     <Route path='/full'>
-                        <Full />
+                        <Full client={client} miners={miners} />
                     </Route>
                     <Route path='/'>
-                        <Home />
+                        <Home miners={miners} />
                     </Route>
 
                 </Switch>
@@ -56,24 +107,17 @@ function App () {
     )
 }
 
-function Full () {
-    const [miners, setMiners] = useState({})
+function Full ({miners, client}) {
     const [minersDeadlines, setMinersDeadlines] = useState({})
     const [head, setHead] = useState()
 
     useEffect(() => {
-        getMiners().then(res => {
-            setMiners(res)
-        })
-    }, [])
-
-    useEffect(() => {
         const fetchingHead = async () => {
-            const fetched = await fetchHead()
+            const fetched = await client.fetchHead()
             setHead(fetched)
         }
         fetchingHead()
-    }, [])
+    }, [client])
 
 
     useEffect(() => {
@@ -83,18 +127,14 @@ function Full () {
         const minersList = Object.keys(miners).slice(0, 50).map(d => miners[d].address)
         asyncPool(5, minersList, async minerId => {
             if (!mounted) return;
-            const deadlines = await fetchDeadlines(minerId, head)
+            const deadlines = await client.fetchDeadlines(minerId, head)
             if (!mounted) return;
             minersDeadlines[minerId] = deadlines
             return await setMinersDeadlines({...minersDeadlines})
         })
 
         return () => { mounted = false }
-    }, [head, miners])
-
-    useEffect(() => {
-        console.log(minersDeadlines)
-    }, [minersDeadlines])
+    }, [client, head, miners])
 
     return (
         <section id='LookUp' className='container'>
@@ -112,18 +152,10 @@ function Full () {
 }
 
 
-function Home () {
-    const [miners, setMiners] = useState()
-
-    useEffect(() => {
-        getMiners().then(res => {
-            setMiners(res)
-        })
-    }, [])
-
+function Home ({miners}) {
     return (
         <section id='home' className='container'>
-            <div class="spacerace">
+            <div className="spacerace">
                 Top miners:
                 {miners && Object.keys(miners).slice(0, 5).map((d, i) =>
                     <div>
@@ -163,8 +195,8 @@ const WindowPoSt = ({deadlines, head}) => {
     return (
         <div className="deadlines windowpost">
             {
-                deadlines && deadlines.nextDeadlines.map(d =>
-                    <div className={d.TotalSectors === 0 ? 'deadline opacity5' : 'deadline'}>
+                deadlines && deadlines.nextDeadlines.map((d, i) =>
+                    <div key={i} className={d.TotalSectors === 0 ? 'deadline opacity5' : 'deadline'}>
 
                         <div className="out">
                             In {d.Close - head.Height}
@@ -180,11 +212,11 @@ const WindowPoSt = ({deadlines, head}) => {
                                     [...Array(
                                         Math.ceil(
                                             Math.round(d.TotalSectors * 32 /1024 - +d.FaultyPower.Raw / (1024*1024*1024*1024))/8
-                                        ))].map(v => <div className='hdd'></div>)
+                                        ))].map((v, i) => <div key={i} className='hdd'></div>)
                                 }
                                 {
-                                    [...Array(Math.ceil(Math.round(+d.FaultyPower.Raw/(1024*1024*1024*1024))/8))].map(v =>
-                                        <div className='hdd faulty'></div>
+                                    [...Array(Math.ceil(Math.round(+d.FaultyPower.Raw/(1024*1024*1024*1024))/8))].map((v, i) =>
+                                        <div key={i} className='hdd faulty'></div>
                                     )
                                 }
 
@@ -205,75 +237,59 @@ const WindowPoSt = ({deadlines, head}) => {
     )
 }
 
-const Miner = () => {
+const Miner = ({ client, miners, head }) => {
     let { minerId } = useParams();
-
-    const [head, setHead] = useState()
-    const [miners, setMiners] = useState()
-
-    useEffect(() => {
-        getMiners().then(res => {
-            setMiners(res)
-        })
-    }, [])
-
-    // Fetch head
-    useEffect(() => {
-        const fetchingHead = async () => {
-            const fetched = await fetchHead()
-            setHead(fetched)
-        }
-        fetchingHead()
-        const interval = setInterval(() => fetchingHead(), 30000)
-        return () => clearInterval(interval)
-    }, [])
+    const [miner, setMiner] = useState({id: minerId})
 
     const canvasRef = React.useRef(null)
     const [context, setContext] = React.useState(null)
-
-    const [miner, setMiner] = useState({id: minerId})
 
     // On new (hash or head): fetch miner
     useEffect(() => {
         if (!minerId || !head) return;
 
         let mounted = true
-        setMiner({...miner})
 
-        fetchDeadlines(minerId, head).then(deadlines => {
-            if (mounted) {
-                miner.deadlines = deadlines
-                setMiner({...miner})
-                /* window.localStorage.setItem(`miner_{minerId}`, JSON.stringify(miner)) */
-            }
-        })
+        const fetchInfo = () => {
+            console.log('url', client.url.slice(20), head.Cids, head.Height)
+            setMiner({...miner})
 
-        fetchDeposits(minerId, head).then(deposits => {
-            if (mounted) {
-                miner.deposits = deposits
-                setMiner({...miner})
-                /* window.localStorage.setItem('miner', JSON.stringify(miner)) */
-            }
-        })
+            client.fetchDeadlines(minerId, head).then(deadlines => {
+                if (mounted) {
+                    miner.deadlines = deadlines
+                    setMiner({...miner})
+                }
+            })
+                  .catch(err => {
+                      console.error(err)
+                  })
 
-        fetchPreCommittedSectors(minerId, head).then(preCommits => {
-            if (mounted) {
-                miner.preCommits = preCommits
-                setMiner({...miner})
-                /* window.localStorage.setItem('miner', JSON.stringify(miner)) */
-            }
-        })
+            client.fetchDeposits(minerId, head).then(deposits => {
+                if (mounted) {
+                    miner.deposits = deposits
+                    setMiner({...miner})
+                }
+            })
 
-        fetchSectors(minerId, head).then(sectors => {
-            if (mounted) {
-                miner.sectors = sectors
-                setMiner({...miner})
-                /* window.localStorage.setItem('miner', JSON.stringify(miner)) */
-            }
-        })
+            client.fetchPreCommittedSectors(minerId, head).then(preCommits => {
+                if (mounted) {
+                    miner.preCommits = preCommits
+                    setMiner({...miner})
+                }
+            })
+
+            client.fetchSectors(minerId, head).then(sectors => {
+                if (mounted) {
+                    miner.sectors = sectors
+                    setMiner({...miner})
+                }
+            })
+        }
+
+        fetchInfo()
 
         return () => { mounted = false }
-    }, [head, minerId])
+    }, [client, head, minerId])
 
     useEffect(() => {
         if (canvasRef.current) {
@@ -287,7 +303,7 @@ const Miner = () => {
         }
     }, [context, miner]);
 
-    if (!miner) {
+    if (!miner || !head) {
         return <></>
     }
 
@@ -307,12 +323,6 @@ const Miner = () => {
                         <a href={`https://filscan.io/#/tipset/address-detail?address=${miner.identicon}`}>filscan</a>,&nbsp;
                         <a href={`https://filscout.io/en/pc/account?id=${miner.id}`}>filscout</a>
                     )
-                </div>
-                <div>
-                    {
-                        head &&
-                        <span>Height <a href={`https://filfox.info/en/tipset/${head.Height}`}>{head.Height}</a></span>
-                    }
                 </div>
             </div>
 
@@ -394,8 +404,8 @@ const Miner = () => {
                 </div>
                 <div className="deadlines provecommit">
                     {
-                        miner.preCommits && miner.preCommits.PreCommitDeadlines.map(d =>
-                            <div className='deadline'>
+                        miner.preCommits && miner.preCommits.PreCommitDeadlines.map((d, i) =>
+                            <div key={i} className='deadline'>
                                 <div className="out">
                                     In {d.Expiry - head.Height}
                                     {/* <span className="epochs">epochs</span> */}
@@ -407,7 +417,7 @@ const Miner = () => {
                                     <div className="hdds">
                                         {
                                             d.Sectors.map(v =>
-                                                <div id={v} className={`hdd ${!!miner.sectors && !!miner.sectors.Sectors[v]}`}>{v == 215428 ? miner.sectors && miner.sectors.Sectors[v]  : ''}</div>
+                                                <div key={v} className={`hdd ${!!miner.sectors && !!miner.sectors.Sectors[v]}`}>{v === 215428 ? miner.sectors && miner.sectors.Sectors[v]  : ''}</div>
                                             )
                                         }
                                     </div>
