@@ -176,7 +176,7 @@ function Status ({client, spa, head, miners}) {
         let mounted = true
         if (!head) return
 
-        const minersList = Object.keys(miners).slice(0, 20).map(d => miners[d].address)
+        const minersList = Object.keys(miners).slice(0, 40).map(d => miners[d].address)
         asyncPool(5, minersList, async minerId => {
             if (!mounted) return;
             const deadlines = await client.fetchDeadlines(minerId, head)
@@ -227,7 +227,7 @@ function Status ({client, spa, head, miners}) {
             </div>
 
             Listing WindowPoSt duties of the top 50 miners.
-            {miners && Object.keys(miners).slice(0, 20).map(d =>
+            {miners && Object.keys(miners).slice(0, 40).map(d =>
                 <div className="flex">
                     <Link to={`/miners/${miners[d].address}`}>{miners[d].address}</Link>
                     {
