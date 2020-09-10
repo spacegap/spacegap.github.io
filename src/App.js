@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import ReactTooltip from 'react-tooltip';
 import {
     HashRouter as Router,
@@ -15,6 +15,15 @@ import './App.scss'
 import asyncPool from "tiny-async-pool";
 const d3 = require('d3')
 const f = d3.format(',')
+const f2 = d3.format(',.2f')
+
+function usePrevious(value) {
+    const ref = useRef();
+    useEffect(() => {
+        ref.current = value;
+    });
+    return ref.current;
+}
 
 function getFilecoinExpectedHeight () {
     const filGenesis = (new Date("2020-08-24 22:00:00Z")).getTime()
@@ -58,12 +67,20 @@ function App () {
         const fetchingHead = async () => {
             client.fetchHead().then(fetched => {
                 if (!mounted) return
-                console.log('new block', fetched.Height)
+                if (head && fetched.Height === head.Height) {
+                    console.log('repeated block, skip')
+                    return
+                }
+                console.log('new block', fetched.Height, head && head.Height)
                 setHead(fetched)
             })
 
             Drand().then(fetched => {
                 if (!mounted) return
+                if (round && fetched.current === round.current) {
+                    console.log('repeated drand, skip')
+                    return
+                }
                 console.log('new drand', fetched)
                 setRound(fetched)
             })
@@ -75,13 +92,13 @@ function App () {
 
         const interval = setInterval(() => {
             fetchingHead()
-        }, 30000)
+        }, 5000)
 
         return () => {
             mounted = false
             clearInterval(interval)
         }
-    }, [client])
+    }, [client, head, round])
 
     return (
         <Router>
@@ -95,15 +112,9 @@ function App () {
                                 <option value='ws://www.border.ninja:12342/node/rpc/v0'>Border's node</option>
                                 <option value='wss://node.glif.io/space07/lotus/rpc/v0'>Glif's node</option>
                             </select>
-                            {
-                                head &&
-                                <>
-                                    <span>Current Tipset <a href={`https://filfox.info/en/tipset/${head.Height}`}>{head.Height}</a></span>
-                                    <span>Expected Tipset <a href={`https://filfox.info/en/tipset/${filExpectedHeight}`}>{filExpectedHeight}</a></span>
-                                </>
-                            }
                         </div>
                     </div>
+                    <TinySummary head={head} expected={filExpectedHeight} round={round} />
                 </div>
                 <header className='container-fluid'>
                     <Link to="/">
@@ -119,6 +130,9 @@ function App () {
                     <Route path='/full'>
                         <Full client={client} miners={miners} />
                     </Route>
+                    <Route path='/status'>
+                        <Status head={head} spa={spa} client={client} miners={miners} />
+                    </Route>
                     <Route path='/'>
                         <Home miners={miners} />
                     </Route>
@@ -126,6 +140,108 @@ function App () {
                 </Switch>
             </div>
         </Router>
+    )
+}
+
+const bytesToPiB = (1024*1024*1024*1024*1024)
+
+function Status ({client, spa, head, miners}) {
+    const [minersDeadlines, setMinersDeadlines] = useState({})
+    const [minersDeadlines2880, setMinersDeadlines2880] = useState({})
+    const [prev60, setPrev60] = useState()
+    const [prev120, setPrev120] = useState()
+
+    useEffect(() => {
+        if (!head) return
+
+        const fetchingPrevious = async () => {
+            const getPrev = async (diff) => {
+                const prevHead = await client.fetchTipsetHead(head.Height - diff)
+                const prevSpa = await client.fetchPower(prevHead)
+                return prevSpa
+            }
+
+            const [prev60, prev120] = await Promise.all([
+                getPrev(60),
+                getPrev(120)
+            ])
+
+            await setPrev60(prev60)
+            await setPrev120(prev120)
+        }
+        fetchingPrevious()
+    }, [head])
+
+    useEffect(() => {
+        let mounted = true
+        if (!head) return
+
+        const minersList = Object.keys(miners).slice(0, 20).map(d => miners[d].address)
+        asyncPool(5, minersList, async minerId => {
+            if (!mounted) return;
+            const deadlines = await client.fetchDeadlines(minerId, head)
+            if (!mounted) return;
+            const prevHead = await client.fetchTipsetHead(head.Height - 2880)
+            if (!mounted) return;
+            const deadlines2880 = await client.fetchDeadlines(minerId, prevHead)
+            if (!mounted) return;
+            minersDeadlines[minerId] = deadlines
+            minersDeadlines2880[minerId] = deadlines2880
+            await setMinersDeadlines({...minersDeadlines})
+            return await setMinersDeadlines2880({...minersDeadlines2880})
+        })
+
+        return () => { mounted = false }
+    }, [client, head, miners])
+
+    return (
+        <section className='container'>
+            <div id="deposits" className="section">
+        <div className='grid'>
+        {
+            spa &&
+            <>
+                <Summary
+                    title={f2(parseInt(spa.TotalQualityAdjPower)/bytesToPiB)}
+                    desc="Total QA Power" />
+            </>
+        }
+        {
+            prev60 && spa &&
+            <>
+                <Summary
+                    title={f2(parseInt(spa.TotalQualityAdjPower - prev60.TotalQualityAdjPower)/bytesToPiB)}
+                    desc="60 Epochs delta" />
+            </>
+        }
+        {
+            prev120 && spa &&
+            <>
+                <Summary
+                    title={f2(parseInt(spa.TotalQualityAdjPower - prev120.TotalQualityAdjPower)/bytesToPiB)}
+                    desc="120 Epochs delta" />
+            </>
+        }
+
+                </div>
+            </div>
+
+            Listing WindowPoSt duties of the top 50 miners.
+            {miners && Object.keys(miners).slice(0, 20).map(d =>
+                <div className="flex">
+                    <Link to={`/miners/${miners[d].address}`}>{miners[d].address}</Link>
+                    {
+                        minersDeadlines && minersDeadlines[miners[d].address] &&
+                        <WindowPoStStatus head={head} deadline={minersDeadlines[miners[d].address].nextDeadlines[47]} />
+                    }
+                    {
+                        minersDeadlines2880 && minersDeadlines2880[miners[d].address] &&
+                        <WindowPoStStatus head={head} deadline={minersDeadlines2880[miners[d].address].nextDeadlines[47]} />
+                    }
+
+                </div>
+            )}
+        </section>
     )
 }
 
@@ -186,7 +302,7 @@ function Home ({miners}) {
                 )}
             </div>
             <div>
-                See deadlines of <Link to={`/full`}>top 50 miners</Link> or click on individual miners.
+                See deadlines of <Link to={`/full`}>top 50 miners</Link> or click on individual miners or the <Link to='/status'>network status</Link>.
             </div>
         </section>
     )
@@ -200,25 +316,27 @@ const PoSt = ({ epoch, posted, skipped }) => {
     )
 }
 
-const Summary = ({condition, title, desc}) => {
+const Summary = ({title, url, desc}) => {
     return (
         <div className="summary col-sm">
-            <div className="summary-title">
-                {title}
+        <div className="summary-title">
+        {
+            url ? <a href={url}>{title}</a> : <>{title}</>
+        }
             </div>
             <div className="summary-desc">
                 {desc}
             </div>
-        </div>
+            </div>
     )
 }
 
-const WindowPoSt = ({deadlines, head}) => {
+const WindowPoStStatus = ({deadline, head}) => {
+    const d = deadline
+
     return (
         <div className="deadlines windowpost">
-            {
-            deadlines && deadlines.nextDeadlines.map((d, i) =>
-            <div key={i} className={d.TotalSectors === 0 ? 'deadline opacity5' : 'deadline'}>
+            <div className={d.TotalSectors === 0 ? 'deadline opacity5' : 'deadline'}>
 
                 <div className="out">
                     In {d.Close - head.Height}
@@ -231,30 +349,97 @@ const WindowPoSt = ({deadlines, head}) => {
                     </div>
                     <div className="hdds">
                         {
-                        [...Array(
-                        Math.ceil(
-                        Math.round(d.TotalSectors * 32 /1024 - +d.FaultyPower.Raw / (1024*1024*1024*1024))/8
-                        ))].map((v, i) => <div key={i} className='hdd'></div>)
+                            [...Array(
+                                Math.ceil(
+                                    Math.round(d.TotalSectors * 32 /1024 - +d.FaultyPower.Raw / (1024*1024*1024*1024))/8
+                                ))].map((v, i) => <div key={i} className='hdd'></div>)
                         }
                         {
-                        [...Array(Math.ceil(Math.round(+d.FaultyPower.Raw/(1024*1024*1024*1024))/8))].map((v, i) =>
-                        <div key={i} className='hdd faulty'></div>
-                        )
+                            [...Array(Math.ceil(Math.round(+d.FaultyPower.Raw/(1024*1024*1024*1024))/8))].map((v, i) =>
+                                <div key={i} className='hdd faulty'></div>
+                            )
                         }
 
                     </div>
                 </div>
-                {/* <div className="partitions">
-                    {
-                    [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
-                    <div className='partition'></div>
-                    )
-                    }
-                </div> */}
             </div>
-            )
+
+        </div>
+    )
+}
+
+
+const WindowPoSt = ({deadlines, head}) => {
+    return (
+        <div className="deadlines windowpost">
+            {
+                deadlines && deadlines.nextDeadlines.map((d, i) =>
+                    <div key={i} className={d.TotalSectors === 0 ? 'deadline opacity5' : 'deadline'}>
+
+                        <div className="out">
+                            In {d.Close - head.Height}
+                            {/* <span className="epochs">epochs</span> */}
+                        </div>
+                        <div className="hddWrapper">
+                            <div className='in'>
+                                {Math.round(d.TotalSectors * 32 /1024)} TiB
+
+                            </div>
+                            <div className="hdds">
+                                {
+                                    [...Array(
+                                        Math.ceil(
+                                            Math.round(d.TotalSectors * 32 /1024 - +d.FaultyPower.Raw / (1024*1024*1024*1024))/8
+                                        ))].map((v, i) => <div key={i} className='hdd'></div>)
+                                }
+                                {
+                                    [...Array(Math.ceil(Math.round(+d.FaultyPower.Raw/(1024*1024*1024*1024))/8))].map((v, i) =>
+                                        <div key={i} className='hdd faulty'></div>
+                                    )
+                                }
+
+                            </div>
+                        </div>
+                        {/* <div className="partitions">
+                            {
+                            [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
+                            <div className='partition'></div>
+                            )
+                            }
+                            </div> */}
+                    </div>
+                )
             }
 
+        </div>
+    )
+}
+
+function TinySummary ({head, expected, round}) {
+    return (
+        <div className='tiny-grid'>
+        {
+            head && expected &&
+            <div>Filecoin Status <span>{head.Height < expected ? expected - head.Height === 1 ? 'gathering blocks' : 'catching up' : 'ok'}</span></div>
+
+        }
+        {
+            head &&
+            <div className='tiny'>
+                Current Tipset <a href={`https://filfox.info/en/tipset/${head.Height}`}>{f(head.Height)}</a></div>
+        }
+        {
+            expected &&
+            <div>Expected Tipset <a href={`https://filfox.info/en/tipset/${expected}`}>{f(expected)}</a></div>
+        }
+        {
+            round &&
+            <>
+                <div>Drand Status <span>{round.current < round.expected ? 'catching up' : 'ok'}</span></div>
+                <div>Current Drand <a href={`https://api.drand.sh/public/${round.current}`}>{f(round.current)}</a></div>
+                <div>Expected Drand <a href={`https://api.drand.sh/public/${round.expected}`}>{f(round.expected)}</a></div>
+            </>
+        }
             </div>
     )
 }

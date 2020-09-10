@@ -104,6 +104,10 @@ h3 {
     font-weight: bold;
 }
 
+.flex {
+    display: flex;
+}
+
 .section {
     margin-top: 20px;
     margin-bottom: 40px;
@@ -132,11 +136,22 @@ h3 {
     font-size: 30px;
     text-align: center;
     margin-top: 100px;
-    /* span { */
-    /*     background: linear-gradient(to top right,#0c50ff 0,#0c50ff 24%,#5b9dff 55.73%,#ff74f1 75%,#ff74f1 100%); */
-    /*     -webkit-background-clip: text; */
-    /*     -webkit-text-fill-color: transparent; */
-    /* } */
+    span {
+        background: linear-gradient(to right,#0c50ff 0,#0c50ff 24%,#5b9dff 55.73%,#ff74f1 75%,#ff74f1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+}
+
+.tiny-grid {
+    display: grid;
+    grid-column-gap: 16px;
+    grid-row-gap: 16px;
+    margin-bottom: 32px;
+    grid-template-columns: repeat(6,1fr);
+    div a, div span {
+        display: block;
+    }
 }
 
 
@@ -175,6 +190,9 @@ h3 {
 
 @media (max-width: 600px) {
     .grid {
+        grid-template-columns: repeat(1, 1fr);
+    }
+    .tiny-grid {
         grid-template-columns: repeat(1, 1fr);
     }
     .deadlines {

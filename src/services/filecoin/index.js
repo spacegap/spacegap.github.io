@@ -2,11 +2,11 @@ import { LotusRPC } from '@filecoin-shipyard/lotus-client-rpc'
 import { BrowserProvider } from '@filecoin-shipyard/lotus-client-provider-browser'
 import Fil from 'js-hamt-filecoin'
 const d3 = require('d3')
+const f = d3.format('0.2f')
 const bx = require('base-x')
 const BASE64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 const b64 = bx(BASE64)
 
-const f = d3.format('0.2f')
 
 const schema = require('@filecoin-shipyard/lotus-client-schema').testnet.fullNode
 
@@ -66,6 +66,10 @@ export default class Filecoin {
 
   async fetchHead () {
     return await this.client.chainHead()
+  }
+
+  async fetchTipsetHead(height) {
+    return await this.client.ChainGetTipSetByHeight(height, null)
   }
 
   async fetchPower (head) {
