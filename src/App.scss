@@ -189,6 +189,10 @@ h3 {
   grid-template-columns: repeat(3, 1fr);
 }
 
+.grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 .hdd.faulty {
   background: #c00;
   border: #c00;
@@ -199,14 +203,12 @@ h3 {
   border: #0c0;
 }
 
-@media (max-width: 992px) {
-  .grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
 .hddWrapper {
   border: 1px solid #dfe8f9;
   border-radius: 2px;
+}
+.hddWrapper:hover {
+  border: 1px solid;
 }
 @media (max-width: 900px) {
   .deadlines {

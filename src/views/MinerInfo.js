@@ -77,26 +77,29 @@ function MinerInfo ({ client, miners, head }) {
         <div className='grid'>
           {miner.deposits && (
             <Summary
-              title={f(miner.deposits.collateral || 0)}
+              title={`${f(miner.deposits.collateral || 0)} FIL`}
               desc='Collateral'
             />
           )}
 
           {miner.deposits && (
             <Summary
-              title={f(miner.deposits.available || 0)}
+              title={`${f(miner.deposits.available || 0)} FIL`}
               desc='Available'
             />
           )}
 
           {miner.deposits && (
-            <Summary title={f(miner.deposits.locked || 0)} desc='Locked' />
+            <Summary
+              desc='Locked'
+              title={`${f(miner.deposits.locked || 0)} FIL`}
+            />
           )}
         </div>
       </div>
 
       <div id='sectors'>
-        <div className='grid'>
+        <div className='grid grid-4'>
           {miner.deadlines && (
             <Summary
               title={`${f2((miner.deadlines.SectorsCount * 32) / 1024)} TiB`}
