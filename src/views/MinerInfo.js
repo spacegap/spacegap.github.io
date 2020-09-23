@@ -128,7 +128,7 @@ function MinerInfo ({ client, miners, head }) {
         <div className='section wpost'>
           <div className='row'>
             <div className='col section-title'>
-              <h3>WindowPoSt due</h3>
+              <h3>Deadlines</h3>
               <a data-tip data-for='wpost-desc'>
                 (what is this?)
               </a>
@@ -151,11 +151,56 @@ function MinerInfo ({ client, miners, head }) {
         </div>
       )}
 
+      {miner.deadlines && (
+        <div className='section'>
+          <div className='row'>
+            <div className='col section-title'>
+              <h3>Upcoming Deadline</h3>
+            </div>
+          </div>
+          <div className='row'>
+            <div className='col'>
+              <ul>
+                <li>
+                  Sectors to Prove:{' '}
+                  {miner.deadlines.nextDeadlines[0].TotalSectors}
+                </li>
+                <li>Current Deadline: {miner.deadlines.deadline.Index}</li>
+                <li>
+                  FaultCutoff:{' '}
+                  {miner.deadlines.deadline.FaultCutoff - head.Height}
+                </li>
+                <li>
+                  Challenge: {miner.deadlines.deadline.Challenge - head.Height}
+                </li>
+                <li>
+                  {miner.deadlines.deadline.Open - head.Height > 0
+                    ? 'Open'
+                    : 'Opened'}
+                  : {miner.deadlines.deadline.Open - head.Height}
+                </li>
+                <li>Close: {miner.deadlines.deadline.Close - head.Height}</li>
+              </ul>
+            </div>
+            <div className='col'>
+              {/* {miner.deadlines.nextDeadlines
+                .map(d => +d.TotalSectors)
+                .find(d => d !== 0)} */}
+              <WindowPoSt
+                minerId={minerId}
+                deadlines={[miner.deadlines.nextDeadlines[0]]}
+                head={head}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {miner.preCommits && (
         <div id='provecommit' className='section'>
           <div className='row'>
             <div className='col section-title'>
-              <h3>ProveCommits due</h3>
+              <h3>New sectors</h3>
               <a data-tip data-for='provecommit-desc'>
                 (what is this?)
               </a>

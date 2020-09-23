@@ -45,7 +45,7 @@ function App () {
     client.fetchPower(head).then(power => {
       setSpa(power)
     })
-  }, [head])
+  }, [head, client])
 
   useEffect(() => {
     let mounted = true

@@ -43,6 +43,7 @@ export default function WindowPoSt ({ minerId, deadlines, head, link, out }) {
                       {' '}
                     </div>
                   ))}
+                  {/* {Math.round(+d.FaultyPower.Raw / (1024 * 1024 * 1024 * 1024))} */}
                   {[
                     ...Array(
                       Math.ceil(

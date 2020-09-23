@@ -1,15 +1,38 @@
 import { LotusRPC } from '@filecoin-shipyard/lotus-client-rpc'
 import { BrowserProvider } from '@filecoin-shipyard/lotus-client-provider-browser'
 import Fil from 'js-hamt-filecoin'
+import { partition } from 'd3'
 const d3 = require('d3')
 const f = d3.format('0.2f')
 const bx = require('base-x')
 const BASE64 =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 const b64 = bx(BASE64)
+const BN = require('bn.js')
 
 const schema = require('@filecoin-shipyard/lotus-client-schema').testnet
   .fullNode
+
+const partitionSchema = {
+  Sectors: 'buffer',
+  Faults: 'buffer',
+  Recoveries: 'buffer',
+  Terminated: 'buffer',
+  ExpirationEpochs: 'cid',
+  EarlyTerminated: 'cid',
+  LivePower: {
+    a: 'bigint',
+    b: 'bigint'
+  },
+  FaultyPower: {
+    a: 'bigint',
+    b: 'bigint'
+  },
+  RecoveringPower: {
+    a: 'bigint',
+    b: 'bigint'
+  }
+}
 
 const preCommitSchema = {
   type: 'hamt',
@@ -43,6 +66,82 @@ function bytesToBig (p) {
   return acc
 }
 
+function bytesToBigRev (p) {
+  let acc = new BN(0)
+  for (let i = 0; i < p.length; i++) {
+    acc = acc.mul(new BN(256))
+    acc = acc.add(new BN(p[p.length - i - 1]))
+  }
+  return acc
+}
+
+function nextBits (obj, n) {
+  // if (obj.left < n) throw new Error("out of bits")
+  const res = obj.num.and(new BN(1).shln(n).sub(new BN(1)))
+  obj.num = obj.num.shrn(n)
+  obj.left -= n
+  return res.toNumber()
+}
+
+function decodeRLE (buf) {
+  const obj = {
+    left: 8 * buf.length,
+    num: bytesToBigRev(buf)
+  }
+  const version = nextBits(obj, 2)
+  const first = nextBits(obj, 1)
+  const res = []
+  while (obj.left > 0) {
+    let b1 = nextBits(obj, 1)
+    if (b1 === 1) {
+      res.push(1)
+      continue
+    }
+    let b2 = nextBits(obj, 1)
+    if (b2 === 1) {
+      const a = nextBits(obj, 4)
+      res.push(a)
+      continue
+    }
+    let x = 0
+    let s = 0
+    for (let i = 0; true; i++) {
+      if (i === 10) {
+        throw new Error('run too long')
+      }
+      let b = nextBits(obj, 8)
+      if (b < 0x80) {
+        if (i > 9 || (i === 9 && b > 1)) {
+          throw new Error('run too long')
+        } else if (b === 0 && s > 0) {
+          throw new Error('invalid run')
+        }
+        x |= b << s
+        break
+      }
+      x |= (b & 0x7f) << s
+      s += 7
+    }
+    res.push(x)
+  }
+  return { first, runs: res }
+}
+
+function decodeRLE2 (buf) {
+  const { first, runs } = decodeRLE(buf)
+  let cur = first
+  const res = []
+  let acc = 0
+  for (let r of runs) {
+    for (let i = 0; i < r; i++) {
+      if (cur === 1) res.push(acc)
+      acc++
+    }
+    cur = 1 - cur
+  }
+  return res
+}
+
 export default class Filecoin {
   constructor (endpointUrl) {
     this.url = endpointUrl
@@ -64,6 +163,18 @@ export default class Filecoin {
 
   async fetchHead () {
     return await this.client.chainHead()
+  }
+
+  async fetchPartitionsSectors (cid) {
+    const node = (await this.client.chainGetNode(`${cid['/']}`)).Obj[2][2]
+    return node.map(partitionRaw => {
+      const partitionObj = Fil.methods.decode(partitionSchema, partitionRaw)
+      return [
+        {
+          Sectors: decodeRLE2(partitionObj.Sectors)
+        }
+      ]
+    })
   }
 
   async fetchTipsetHead (height) {
@@ -133,13 +244,23 @@ export default class Filecoin {
         Close: deadline.Close + i * 60,
         Index: (deadline.Index + i) % 48
       }))
-      .map(({ Close, LiveSectors, TotalSectors, FaultyPower, Index }) => ({
-        Close,
-        LiveSectors,
-        TotalSectors,
-        FaultyPower,
-        Index
-      }))
+      .map(
+        ({
+          Close,
+          LiveSectors,
+          TotalSectors,
+          FaultyPower,
+          Index,
+          Partitions
+        }) => ({
+          Close,
+          LiveSectors,
+          TotalSectors,
+          FaultyPower,
+          Index,
+          Partitions
+        })
+      )
 
     const SectorsCount = deadlines
       .map(d => +d.LiveSectors)
@@ -160,7 +281,8 @@ export default class Filecoin {
       nextDeadlines,
       SectorsCount,
       FaultsCount,
-      ActiveCount: SectorsCount - FaultsCount
+      ActiveCount: SectorsCount - FaultsCount,
+      deadline
     }
   }
 

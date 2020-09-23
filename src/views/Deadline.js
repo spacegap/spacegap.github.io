@@ -11,8 +11,10 @@ const f2 = d3.format(',.1f')
 
 function Deadline ({ miners, client, head }) {
   const { minerId, deadlineId } = useParams()
+  const [partitions, setPartitions] = useState()
   // const [miner, setMiner] = useState({ id: minerId })
   const [minerDeadlines, setMinerDeadlines] = useState({})
+  const [todayDeadlines, setTodayDeadlines] = useState()
 
   const deadlinesArray = () => {
     return Object.keys(minerDeadlines)
@@ -27,6 +29,16 @@ function Deadline ({ miners, client, head }) {
       })
       .flat()
   }
+
+  useEffect(() => {
+    if (!todayDeadlines) return
+    client
+      .fetchPartitionsSectors(todayDeadlines.nextDeadlines[0].Partitions)
+      .then(d => {
+        console.log('partitions, d', d)
+        setPartitions(d)
+      })
+  }, [todayDeadlines])
 
   useEffect(() => {
     if (!minerId || !head || !deadlineId) {
@@ -48,7 +60,10 @@ function Deadline ({ miners, client, head }) {
           const deadlines = await client.fetchDeadlines(minerId, prevHead)
           if (!mounted) return
           minerDeadlines[day] = deadlines
-          return setMinerDeadlines({ ...minerDeadlines })
+          setMinerDeadlines({ ...minerDeadlines })
+          if (day === 0) {
+            setTodayDeadlines(deadlines)
+          }
         } catch (e) {
           console.log('could not find', day, height)
           console.log(e)
@@ -95,6 +110,18 @@ function Deadline ({ miners, client, head }) {
               )} Total Sectors`}
             />
           )}
+          {minerDeadlines && minerDeadlines[0] && (
+            <Summary
+              title={`${f2(
+                +minerDeadlines[0].deadlines[deadlineId].FaultyPower.Raw /
+                  (1024 * 1024 * 1024 * 1024)
+              )} TiB`}
+              desc={`${f(
+                +minerDeadlines[0].deadlines[deadlineId].FaultyPower.Raw /
+                  ((1024 * 1024 * 1024 * 1024) / 32)
+              )} Faulty Sectors`}
+            />
+          )}
         </div>
       </div>
       <div className='section wpost'>
@@ -121,6 +148,38 @@ function Deadline ({ miners, client, head }) {
           head={head}
           out={({ d, head, i }) => (i === 0 ? `Today` : `${i}d ago`)}
         />
+      </div>
+      <div className='section sectors'>
+        <div className='row'>
+          <div className='col section-title'>
+            <h3>Sectors</h3>
+            <a data-tip data-for='sectors-desc'>
+              (what is this?)
+            </a>
+            <ReactTooltip id='sectors-desc' effect='solid' place='top'>
+              <span>
+                List of 48 WindowPoSt submission deadlines ordered by due time
+                (in epochs).
+              </span>
+            </ReactTooltip>
+          </div>
+        </div>
+        {partitions && (
+          <div>
+            {partitions.map((partition, i) => (
+              <>
+                <h4>Partition {i}</h4>
+                <div className='s-partition'>
+                  {partition[0].Sectors.map(sector => (
+                    <div className='s-sector'>
+                      <span>{sector}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )
