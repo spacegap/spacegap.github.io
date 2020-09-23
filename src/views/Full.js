@@ -27,7 +27,7 @@ export default function Full ({ miners, client }) {
       if (!mounted) return
       const deadlines = await client.fetchDeadlines(minerId, head)
       if (!mounted) return
-      minersDeadlines[minerId] = deadlines
+      minersDeadlines[minerId] = deadlines.nextDeadlines
       return await setMinersDeadlines({ ...minersDeadlines })
     })
 

@@ -130,13 +130,15 @@ export default class Filecoin {
     const nextDeadlines = [...Array(48)]
       .map((_, i) => ({
         ...deadlines[(deadline.Index + i) % 48],
-        Close: deadline.Close + i * 60
+        Close: deadline.Close + i * 60,
+        Index: (deadline.Index + i) % 48
       }))
-      .map(({ Close, LiveSectors, TotalSectors, FaultyPower }) => ({
+      .map(({ Close, LiveSectors, TotalSectors, FaultyPower, Index }) => ({
         Close,
         LiveSectors,
         TotalSectors,
-        FaultyPower
+        FaultyPower,
+        Index
       }))
 
     const SectorsCount = deadlines
@@ -150,6 +152,11 @@ export default class Filecoin {
       (32 * 1024 * 1024 * 1024)
 
     return {
+      deadlines: deadlines.map((d, i) => ({
+        ...deadlines[i],
+        Close: deadline.Close + i * 60,
+        Index: i
+      })),
       nextDeadlines,
       SectorsCount,
       FaultsCount,

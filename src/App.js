@@ -7,7 +7,8 @@ import Drand from './services/drand'
 import Home from './views/Home'
 import Status from './views/Status'
 import Full from './views/Full'
-import Miner from './components/Miner'
+import Deadline from './views/Deadline'
+import MinerInfo from './views/MinerInfo'
 import TinySummary from './components/TinySummary'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -22,9 +23,7 @@ function App () {
   const [miners, setMiners] = useState()
   const [head, setHead] = useState()
   const [round, setRound] = useState()
-  const [node, setNode] = useState(
-    'wss://lotus.jimpick.com/spacerace_api/0/node/rpc/v0'
-  )
+  const [node, setNode] = useState('wss://node.glif.io/space07/lotus/rpc/v0')
   const [client, setFilClient] = useState(new Filecoin(node))
   const [filExpectedHeight, setFilExpectedHeight] = useState(
     getFilecoinExpectedHeight()
@@ -98,12 +97,7 @@ function App () {
         <div className='container'>
           <div className='row'>
             <div className='col'>
-              <select
-                id=''
-                name=''
-                onChange={e => setNode(e.target.value)}
-                value={node}
-              >
+              <select onChange={e => setNode(e.target.value)} value={node}>
                 <option value='wss://lotus.jimpick.com/spacerace_api/0/node/rpc/v0'>
                   Jim's node 0
                 </option>
@@ -129,10 +123,11 @@ function App () {
           </Link>
         </header>
         <Switch>
+          <Route path='/miners/:minerId/deadlines/:deadlineId'>
+            <Deadline client={client} miners={miners} head={head} />
+          </Route>
           <Route path='/miners/:minerId'>
-            <section className='container'>
-              <Miner client={client} miners={miners} head={head} />
-            </section>
+            <MinerInfo client={client} miners={miners} head={head} />
           </Route>
           <Route path='/full'>
             <Full client={client} miners={miners} />

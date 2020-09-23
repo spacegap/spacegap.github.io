@@ -1,4 +1,21 @@
+@import url("https://rsms.me/inter/inter.css");
+html {
+  font-family: "Inter", sans-serif;
+}
+@supports (font-variation-settings: normal) {
+  html {
+    font-family: "Inter var", sans-serif;
+  }
+}
+
+a:hover {
+  text-decoration: none;
+}
+
 .App {
+  font-family: "Inter var";
+  font-variant: none;
+  font-feature-settings: "ss01", "ss02", "cv01", "cv03";
 }
 
 /* .App-header { */
@@ -12,190 +29,228 @@
 /*   color: white; */
 /* } */
 
-
 .Circle {
-    height: 20px;
-    width: 20px;
+  height: 20px;
+  width: 20px;
 }
 
 h3 {
-    text-transform: uppercase;
-    font-weight: bolder;
-    font-size: 1.5em;
-    margin-bottom: 20px;
+  text-transform: uppercase;
+  font-weight: bolder;
+  font-size: 1.5em;
+  margin-bottom: 20px;
 }
 
 .summary {
-    background-color: rgb(240, 245, 249);
-    /* border: 1px solid; */
-    border-radius: 4px;
-    text-align: center;
-    padding-top: 30px;
-    padding-bottom: 20px;
-    .summary-title {
-        font-weight: bold;
-        font-size: 1.5em;
-    }
-    .summary-desc {
-        color: #657795;
-        text-transform: uppercase;
-        font-weight: bold;
-        font-size: 0.8em;
-    }
+  background-color: rgb(240, 245, 249);
+  /* border: 1px solid; */
+  border-radius: 15px;
+  text-align: center;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  .summary-title {
+    font-weight: bold;
+    font-size: 1.5em;
+  }
+  .summary-desc {
+    color: #657795;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 0.8em;
+  }
 }
 .deadlines {
-    display: grid;
-    grid-template-columns: repeat(12,1fr);
-    grid-column-gap: 10px;
-    grid-row-gap: 10px;
-
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-column-gap: 10px;
+  grid-row-gap: 10px;
 }
 .deadline {
-    font-size: 0.7em;
-    .epochs {
-        font-size: 0.8em;
-        line-height: 0.3em;
-    }
+  font-size: 0.7em;
+  .epochs {
+    font-size: 0.8em;
+    line-height: 0.3em;
+  }
 }
 .partition {
-    width: 10px;
-    height: 10px;
-    margin: 2px;
-    border: 1px solid;
-    display: block;
+  width: 10px;
+  height: 10px;
+  margin: 2px;
+  border: 1px solid;
+  display: block;
 }
 .hdds {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    grid-column-gap: 1px;
-    grid-row-gap: 2px;
-    border: 3px solid #f0f5f9;
-    padding: 1px;
-    /* border-top: 7px solid; */
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-column-gap: 1px;
+  grid-row-gap: 2px;
+  border: 3px solid #f0f5f9;
+  padding: 1px;
+  /* border-top: 7px solid; */
 }
 .hdd {
-    width: 3px;
-    height: 11px;
-    background: #dfe8f9;
-    border: 1px solid #657795;
+  width: 3px;
+  height: 11px;
+  background: #dfe8f9;
+  border: 1px solid #657795;
 }
 .opacity5 {
-    opacity: 0.4;
+  opacity: 0.4;
 }
 .provecommit .hdds {
-    grid-template-columns: repeat(6,1fr);
+  grid-template-columns: repeat(6, 1fr);
 }
 .provecommit .hdd {
-    width: 5px;
-    height: 5px;
-    border-radius: 10px;
+  width: 5px;
+  height: 5px;
+  border-radius: 10px;
 }
 .out {
-    text-align: center;
+  text-align: center;
+  color: #212529;
 }
 .in {
-    border-radius: 2px 2px 0px 0px;
-    background: #f0f5f9;
-    color: #657795;
-    font-size: 0.9em;
-    width: 100%;
-    padding: 2px;
-    text-align: center;
-    font-weight: bold;
+  border-radius: 2px 2px 0px 0px;
+  background: #f0f5f9;
+  color: #657795;
+  font-size: 0.9em;
+  width: 100%;
+  padding: 2px;
+  text-align: center;
+  font-weight: bold;
 }
 
 .flex {
-    display: flex;
+  display: flex;
 }
 
 .section {
-    margin-top: 20px;
-    margin-bottom: 40px;
+  margin-top: 20px;
+  margin-bottom: 40px;
 }
 .section-title {
-    display: flex;
-    a {
-        margin-left: 20px;
-        margin-top: 4px;
-        font-size: 0.9em;
-    }
+  display: flex;
+  a {
+    margin-left: 20px;
+    margin-top: 4px;
+    font-size: 0.9em;
+  }
 }
 
 .miner-name {
-    border: 1px solid #dfe8f9;
-    padding: 4px 7px;
-    border-radius: 10px;
+  border: 1px solid #dfe8f9;
+  padding: 4px 7px;
+  border-radius: 10px;
+  padding: 10px 20px;
+  border-radius: 20px;
 }
 
 .provecommit .in {
-    display: none;
+  display: none;
 }
 
 #logo {
-    font-weight: bold;
-    font-size: 30px;
-    text-align: center;
-    margin-top: 100px;
-    span {
-        background: linear-gradient(to right,#0c50ff 0,#0c50ff 24%,#5b9dff 55.73%,#ff74f1 75%,#ff74f1 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
+  font-weight: bold;
+  font-size: 30px;
+  text-align: center;
+  margin-top: 100px;
+  span {
+    background: linear-gradient(
+      to right,
+      #0c50ff 0,
+      #0c50ff 24%,
+      #5b9dff 55.73%,
+      #ff74f1 75%,
+      #ff74f1 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 }
 
 .tiny-grid {
-    display: grid;
-    grid-column-gap: 16px;
-    grid-row-gap: 16px;
-    margin-bottom: 32px;
-    grid-template-columns: repeat(6,1fr);
-    div a, div span {
-        display: block;
-    }
+  display: grid;
+  grid-column-gap: 16px;
+  grid-row-gap: 16px;
+  margin-bottom: 32px;
+  grid-template-columns: repeat(6, 1fr);
+  div a,
+  div span {
+    display: block;
+    font-weight: 600;
+  }
 }
 
-
 .grid {
-    display: grid;
-    grid-column-gap: 16px;
-    grid-row-gap: 16px;
-    margin-bottom: 32px;
-    grid-template-columns: repeat(3,1fr);
+  display: grid;
+  grid-column-gap: 16px;
+  grid-row-gap: 16px;
+  margin-bottom: 32px;
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .hdd.faulty {
-    background: #c00;
-    border: #c00;
+  background: #c00;
+  border: #c00;
 }
 
 .hdd.true {
-    background: #0c0;
-    border: #0c0;
+  background: #0c0;
+  border: #0c0;
 }
 
 @media (max-width: 992px) {
-    .grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 .hddWrapper {
-    border: 1px solid #dfe8f9;
-    border-radius: 2px;
+  border: 1px solid #dfe8f9;
+  border-radius: 2px;
 }
 @media (max-width: 900px) {
-    .deadlines {
-        /* grid-template-columns: repeat(16, 1fr); */
-    }
+  .deadlines {
+    /* grid-template-columns: repeat(16, 1fr); */
+  }
 }
 
 @media (max-width: 600px) {
-    .grid {
-        grid-template-columns: repeat(1, 1fr);
+  .grid {
+    grid-template-columns: repeat(1, 1fr);
+  }
+  .tiny-grid {
+    grid-template-columns: repeat(1, 1fr);
+  }
+  .deadlines {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.minerbar {
+  .minerId {
+    display: flex;
+    font-size: 2.5em;
+    line-height: 1;
+    margin-bottom: 20px;
+    font-weight: 700;
+    a {
+      color: #212529;
     }
-    .tiny-grid {
-        grid-template-columns: repeat(1, 1fr);
-    }
-    .deadlines {
-        grid-template-columns: repeat(4, 1fr);
-    }
+  }
+  .tinyarrow {
+    font-size: 0.55em;
+  }
+}
+
+.backto {
+  a {
+    background: #f0f5f9;
+    color: #657795;
+    padding: 10px 20px;
+    border-radius: 20px;
+  }
+}
+
+.bolder {
+  font-weight: 700;
 }

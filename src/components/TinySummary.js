@@ -27,7 +27,7 @@ export default function TinySummary ({ head, expected, round }) {
         </div>
       )}
       {expected && (
-        <div>
+        <div className='tiny'>
           Expected Tipset{' '}
           <a href={`https://filfox.info/en/tipset/${expected}`}>
             {f(expected)}
@@ -36,17 +36,17 @@ export default function TinySummary ({ head, expected, round }) {
       )}
       {round && (
         <>
-          <div>
+          <div className='tiny'>
             Drand Status{' '}
             <span>{round.current < round.expected ? 'catching up' : 'ok'}</span>
           </div>
-          <div>
+          <div className='tiny'>
             Current Drand{' '}
             <a href={`https://api.drand.sh/public/${round.current}`}>
               {f(round.current)}
             </a>
           </div>
-          <div>
+          <div className='tiny'>
             Expected Drand{' '}
             <a href={`https://api.drand.sh/public/${round.expected}`}>
               {f(round.expected)}
