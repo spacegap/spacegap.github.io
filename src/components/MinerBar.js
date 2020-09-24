@@ -33,7 +33,7 @@ export default function MinerBar ({ client, miners, minerId, deadlineId }) {
       )}
       {!deadlineId && (
         <div>
-          {miners && miners[minerId].tag && (
+          {miners && miners[minerId] && miners[minerId].tag && (
             <span className='miner-name'>
               {miners[minerId].tag.en}
 
