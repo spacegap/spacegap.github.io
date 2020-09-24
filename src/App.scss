@@ -70,6 +70,8 @@ h3 {
   grid-template-columns: repeat(50, 1fr);
   grid-column-gap: 1px;
   grid-row-gap: 1px;
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 .s-sector {
   font-size: 0em;
@@ -77,6 +79,8 @@ h3 {
   height: 10px;
   background-color: #f0f5f9;
   border: 1px solid #dfe8f9;
+}
+.s-sector.faulty {
 }
 .s-sector:hover {
   width: 0px;
@@ -179,7 +183,8 @@ h3 {
   font-weight: bold;
   font-size: 30px;
   text-align: center;
-  margin-top: 100px;
+  margin-top: 150px;
+  margin-bottom: 50px;
   span {
     background: linear-gradient(
       to right,
@@ -219,14 +224,19 @@ h3 {
   grid-template-columns: repeat(4, 1fr);
 }
 
-.hdd.faulty {
+.faulty {
   background: #c00;
   border: #c00;
 }
 
-.hdd.true {
+.recovering {
   background: #0c0;
   border: #0c0;
+}
+
+.terminated {
+  background: #000;
+  border: #000;
 }
 
 .hddWrapper {
@@ -276,11 +286,20 @@ h3 {
     color: #657795;
     padding: 10px 20px;
     border-radius: 20px;
+    border: 1px solid #fff;
+  }
+  a:hover {
+    border: 1px solid;
   }
 }
 
 .bolder {
   font-weight: 700;
 }
-.s-sector {
+
+.rekt {
+  color: white;
+  background: #c00;
+  border-radius: 10px;
+  padding: 5px 10px;
 }

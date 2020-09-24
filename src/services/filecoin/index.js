@@ -171,7 +171,25 @@ export default class Filecoin {
       const partitionObj = Fil.methods.decode(partitionSchema, partitionRaw)
       return [
         {
-          Sectors: decodeRLE2(partitionObj.Sectors)
+          Sectors: decodeRLE2(partitionObj.Sectors),
+          Faults: decodeRLE2(partitionObj.Faults).reduce((acc, curr) => {
+            acc[curr] = true
+            return acc
+          }, {}),
+          Terminated: decodeRLE2(partitionObj.Terminated).reduce(
+            (acc, curr) => {
+              acc[curr] = true
+              return acc
+            },
+            {}
+          ),
+          Recoveries: decodeRLE2(partitionObj.Recoveries).reduce(
+            (acc, curr) => {
+              acc[curr] = true
+              return acc
+            },
+            {}
+          )
         }
       ]
     })
@@ -238,29 +256,11 @@ export default class Filecoin {
       this.client.StateMinerDeadlines(hash, head.Cids)
     ])
 
-    const nextDeadlines = [...Array(48)]
-      .map((_, i) => ({
-        ...deadlines[(deadline.Index + i) % 48],
-        Close: deadline.Close + i * 60,
-        Index: (deadline.Index + i) % 48
-      }))
-      .map(
-        ({
-          Close,
-          LiveSectors,
-          TotalSectors,
-          FaultyPower,
-          Index,
-          Partitions
-        }) => ({
-          Close,
-          LiveSectors,
-          TotalSectors,
-          FaultyPower,
-          Index,
-          Partitions
-        })
-      )
+    const nextDeadlines = [...Array(48)].map((_, i) => ({
+      ...deadlines[(deadline.Index + i) % 48],
+      Close: deadline.Close + i * 60,
+      Index: (deadline.Index + i) % 48
+    }))
 
     const SectorsCount = deadlines
       .map(d => +d.LiveSectors)

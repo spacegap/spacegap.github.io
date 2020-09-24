@@ -18,7 +18,7 @@ function Deadline ({ miners, client, head }) {
 
   const deadlinesArray = () => {
     return Object.keys(minerDeadlines)
-      .sort((a, b) => a - b)
+      .sort((a, b) => +a - +b)
       .map(k => [k, minerDeadlines[k]])
   }
 
@@ -33,9 +33,8 @@ function Deadline ({ miners, client, head }) {
   useEffect(() => {
     if (!todayDeadlines) return
     client
-      .fetchPartitionsSectors(todayDeadlines.nextDeadlines[0].Partitions)
+      .fetchPartitionsSectors(todayDeadlines.deadlines[deadlineId].Partitions)
       .then(d => {
-        console.log('partitions, d', d)
         setPartitions(d)
       })
   }, [todayDeadlines])
@@ -157,26 +156,35 @@ function Deadline ({ miners, client, head }) {
               (what is this?)
             </a>
             <ReactTooltip id='sectors-desc' effect='solid' place='top'>
-              <span>
-                List of 48 WindowPoSt submission deadlines ordered by due time
-                (in epochs).
-              </span>
+              <span>Each square is a 32GiB sector.</span>
             </ReactTooltip>
           </div>
         </div>
         {partitions && (
           <div>
             {partitions.map((partition, i) => (
-              <>
-                <h4>Partition {i}</h4>
+              <div key={i}>
+                <h4>
+                  Partition {i}{' '}
+                  {Object.keys(partition[0].Faults).length ===
+                    partition[0].Sectors.length && (
+                    <span class='rekt'>REKT</span>
+                  )}
+                </h4>
                 <div className='s-partition'>
                   {partition[0].Sectors.map(sector => (
-                    <div className='s-sector'>
+                    <div
+                      key={sector}
+                      className={`s-sector ${partition[0].Faults[sector] &&
+                        'faulty'} ${partition[0].Terminated[sector] &&
+                        'terminated'} ${partition[0].Recoveries[sector] &&
+                        'recovering'}`}
+                    >
                       <span>{sector}</span>
                     </div>
                   ))}
                 </div>
-              </>
+              </div>
             ))}
           </div>
         )}

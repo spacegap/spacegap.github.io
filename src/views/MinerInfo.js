@@ -160,7 +160,12 @@ function MinerInfo ({ client, miners, head }) {
           </div>
           <div className='row'>
             <div className='col'>
+              <div className='timeline'></div>
               <ul>
+                <li>
+                  PoStSubmissions:
+                  {miner.deadlines.nextDeadlines[0].PostSubmissions}
+                </li>
                 <li>
                   Sectors to Prove:{' '}
                   {miner.deadlines.nextDeadlines[0].TotalSectors}
