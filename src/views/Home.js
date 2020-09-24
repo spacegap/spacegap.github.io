@@ -8,7 +8,7 @@ export default function Home ({ miners }) {
         Top miners:
         {miners &&
           Object.keys(miners)
-            .slice(0, 10)
+            .slice(0, 15)
             .map((d, i) => (
               <div key={i}>
                 {i + 1}.{' '}
