@@ -35,7 +35,7 @@ export default function MinerBar ({ client, miners, minerId, deadlineId }) {
         <div>
           {miners && miners[minerId] && miners[minerId].tag && (
             <span className='miner-name'>
-              {miners[minerId].tag.en}
+              {miners[minerId].tag.name}
 
               {miners && miners[minerId].location && (
                 <span> {miners[minerId].location.flagEmoji}</span>
