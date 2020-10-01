@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 export default function MinerBar ({ client, miners, minerId, deadlineId }) {
   return (
     <div className='section minerbar'>
-      <div class='minerId'>
+      <div className='minerId'>
         {!deadlineId && (
           <>
             <Link to={`/miners/${minerId}`}>{minerId}</Link>
@@ -23,10 +23,10 @@ export default function MinerBar ({ client, miners, minerId, deadlineId }) {
       </div>
       {deadlineId && (
         <>
-          <div class='backto'>
+          <div className='backto'>
             <Link to={`/miners/${minerId}`}>
               See miner
-              <span class='bolder'> {minerId}</span>
+              <span className='bolder'> {minerId}</span>
             </Link>
           </div>
         </>

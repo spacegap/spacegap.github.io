@@ -275,12 +275,12 @@ export default class Filecoin {
     const deadlines = await asyncPool(24, deadlinesCids, async minerCid => {
       const deadline = (await this.client.ChainGetNode(`${minerCid['/']}`)).Obj
       return {
+        Partitions: deadline[0],
         LiveSectors: deadline[4],
         TotalSectors: deadline[5],
         FaultyPower: { Raw: Number(b64ToBn(deadline[6][0])) }
       }
     })
-    console.log(deadlines)
     return deadlines
   }
 

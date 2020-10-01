@@ -168,7 +168,7 @@ function Deadline ({ miners, client, head }) {
                   Partition {i}{' '}
                   {Object.keys(partition[0].Faults).length ===
                     partition[0].Sectors.length && (
-                    <span class='rekt'>REKT</span>
+                    <span className='rekt'>REKT</span>
                   )}
                 </h4>
                 <div className='s-partition'>
