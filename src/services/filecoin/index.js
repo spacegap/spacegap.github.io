@@ -250,12 +250,12 @@ export default class Filecoin {
 
   async getMiners () {
     const cached = window.localStorage.getItem('miners')
-    if (cached) return JSON.parse(cached)
+    const cachedTime = window.localStorage.getItem('time')
+    if (cached && cachedTime && Date.now() - +cachedTime > 60000)
+      return JSON.parse(cached)
 
     const json = await (
-      await fetch(
-        'https://filfox.info/api/v0/miner/list/power?pageSize=1000&page=0'
-      )
+      await fetch('https://filfox.info/api/v0/miner/list/power?pageSize=1000')
     ).json()
     const miners = json.miners.reduce((acc, curr) => {
       acc[curr.address] = curr
@@ -263,6 +263,7 @@ export default class Filecoin {
     }, {})
 
     window.localStorage.setItem('miners', JSON.stringify(miners))
+    window.localStorage.setItem('time', Date.now())
 
     return miners
   }
