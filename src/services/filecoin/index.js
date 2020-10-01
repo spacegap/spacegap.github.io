@@ -2,6 +2,7 @@ import { LotusRPC } from '@filecoin-shipyard/lotus-client-rpc'
 import { BrowserProvider } from '@filecoin-shipyard/lotus-client-provider-browser'
 import Fil from 'js-hamt-filecoin'
 import { partition } from 'd3'
+import asyncPool from 'tiny-async-pool'
 const d3 = require('d3')
 const f = d3.format('0.2f')
 const bx = require('base-x')
@@ -12,6 +13,22 @@ const BN = require('bn.js')
 
 const schema = require('@filecoin-shipyard/lotus-client-schema').testnet
   .fullNode
+
+function b64ToBn (b64) {
+  if (b64 === '') return 0n
+  var bin = atob(b64)
+  var hex = []
+
+  bin.split('').forEach(function (ch) {
+    var h = ch.charCodeAt(0).toString(16)
+    if (h.length % 2) {
+      h = '0' + h
+    }
+    hex.push(h)
+  })
+
+  return window.BigInt('0x' + hex.join(''))
+}
 
 const partitionSchema = {
   Sectors: 'buffer',
@@ -250,10 +267,27 @@ export default class Filecoin {
     return miners
   }
 
+  async fetchDeadlinesProxy (miner, head) {
+    const state = head.Blocks[0].ParentStateRoot['/']
+    const deadlinesCids = (
+      await this.client.chainGetNode(`${state}/@Ha:${miner}/1/11`)
+    ).Obj[0]
+    const deadlines = await asyncPool(24, deadlinesCids, async minerCid => {
+      const deadline = (await this.client.ChainGetNode(`${minerCid['/']}`)).Obj
+      return {
+        LiveSectors: deadline[4],
+        TotalSectors: deadline[5],
+        FaultyPower: { Raw: Number(b64ToBn(deadline[6][0])) }
+      }
+    })
+    console.log(deadlines)
+    return deadlines
+  }
+
   async fetchDeadlines (hash, head) {
     const [deadline, deadlines] = await Promise.all([
       this.client.StateMinerProvingDeadline(hash, head.Cids),
-      this.client.StateMinerDeadlines(hash, head.Cids)
+      this.fetchDeadlinesProxy(hash, head)
     ])
 
     const nextDeadlines = [...Array(48)].map((_, i) => ({
@@ -315,7 +349,6 @@ export default class Filecoin {
   async fetchSectors (hash, head) {
     const sectorList = await this.client.StateMinerSectors(
       hash,
-      null,
       null,
       head.Cids
     )

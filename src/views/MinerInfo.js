@@ -34,7 +34,7 @@ function MinerInfo ({ client, miners, head }) {
           }
         })
         .catch(err => {
-          console.error('failed to load deadline')
+          console.error('failed to load deadline', err)
         })
 
       client.fetchDeposits(minerId, head).then(deposits => {
