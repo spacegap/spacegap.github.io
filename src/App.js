@@ -20,6 +20,7 @@ function getFilecoinExpectedHeight () {
 }
 
 function App () {
+  console.log('reloaded')
   const [miners, setMiners] = useState()
   const [head, setHead] = useState()
   const [round, setRound] = useState()
@@ -76,7 +77,9 @@ function App () {
         setRound(fetched)
       })
 
-      setFilExpectedHeight(getFilecoinExpectedHeight())
+      if (getFilecoinExpectedHeight() != filExpectedHeight) {
+        setFilExpectedHeight(getFilecoinExpectedHeight())
+      }
     }
 
     fetchingHead()
