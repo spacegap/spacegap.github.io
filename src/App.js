@@ -60,24 +60,24 @@ function App () {
       client.fetchHead().then(fetched => {
         if (!mounted) return
         if (head && fetched.Height === head.Height) {
-          console.log('repeated block, skip')
+          console.log('   repeated block, skip')
           return
         }
-        console.log('new block', fetched.Height, head && head.Height)
+        console.log('   new block', fetched.Height, head && head.Height)
         setHead(fetched)
       })
 
       Drand().then(fetched => {
         if (!mounted) return
         if (round && fetched.current === round.current) {
-          console.log('repeated drand, skip')
+          console.log('   repeated drand, skip')
           return
         }
-        console.log('new drand', fetched)
+        console.log('   new drand', fetched)
         setRound(fetched)
       })
 
-      if (getFilecoinExpectedHeight() != filExpectedHeight) {
+      if (getFilecoinExpectedHeight() !== filExpectedHeight) {
         setFilExpectedHeight(getFilecoinExpectedHeight())
       }
     }
@@ -85,12 +85,15 @@ function App () {
     fetchingHead()
 
     const interval = setInterval(() => {
-      fetchingHead()
+      if (mounted) {
+        fetchingHead()
+      }
     }, 5000)
 
     return () => {
       mounted = false
       clearInterval(interval)
+      console.log('removing interval')
     }
   }, [client, head, round])
 

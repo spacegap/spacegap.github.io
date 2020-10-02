@@ -46,13 +46,6 @@ function MinerInfo ({ client, miners, head }) {
           setMiner({ ...miner })
         }
       })
-
-      client.fetchSectors(minerId, head).then(sectors => {
-        if (mounted) {
-          miner.sectors = sectors
-          setMiner({ ...miner })
-        }
-      })
     }
 
     fetchInfo()
@@ -227,14 +220,8 @@ function MinerInfo ({ client, miners, head }) {
                   </div>
                   <div className='hdds'>
                     {d.Sectors.map(v => (
-                      <div
-                        key={v}
-                        className={`hdd ${!!miner.sectors &&
-                          !!miner.sectors.Sectors[v]}`}
-                      >
-                        {v === 215428
-                          ? miner.sectors && miner.sectors.Sectors[v]
-                          : ''}
+                      <div key={v} className='hdd'>
+                        {''}
                       </div>
                     ))}
                   </div>
