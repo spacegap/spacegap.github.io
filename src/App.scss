@@ -83,12 +83,14 @@ h3 {
 .s-sector.faulty {
 }
 .s-sector:hover {
-  width: 0px;
-  height: 0;
+  // width: 0px;
+  // height: 0;
+  border: 1px solid #657795;
   span {
     font-size: 30px;
     position: absolute;
-    margin-top: -20px;
+    margin-top: -60px;
+    margin-left: -40px;
     text-align: center;
     background: #fff;
     border: 1px solid;

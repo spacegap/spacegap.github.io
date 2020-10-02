@@ -1,9 +1,52 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import Drand from '../services/drand'
 
 const d3 = require('d3')
 const f = d3.format(',')
 
-export default function TinySummary ({ head, expected, round }) {
+function getFilecoinExpectedHeight () {
+  const filGenesis = new Date('2020-08-24 22:00:00Z').getTime()
+  return Math.floor((Date.now() - filGenesis) / 1000 / 30)
+}
+
+export default function TinySummary ({ client, head }) {
+  const [expected, setFilExpectedHeight] = useState(getFilecoinExpectedHeight())
+  const [round, setRound] = useState()
+
+  useEffect(() => {
+    let mounted = true
+
+    const fetchingHead = async () => {
+      Drand().then(fetched => {
+        if (!mounted) return
+        if (round && fetched.current === round.current) {
+          console.log('   repeated drand, skip')
+          return
+        }
+        console.log('   new drand', fetched)
+        setRound(fetched)
+      })
+
+      if (getFilecoinExpectedHeight() !== expected) {
+        setFilExpectedHeight(getFilecoinExpectedHeight())
+      }
+    }
+
+    fetchingHead()
+
+    const interval = setInterval(() => {
+      if (mounted) {
+        fetchingHead()
+      }
+    }, 5000)
+
+    return () => {
+      mounted = false
+      clearInterval(interval)
+      console.log('removing interval')
+    }
+  }, [client, head, round])
+
   return (
     <div className='tiny-grid'>
       {head && expected && (

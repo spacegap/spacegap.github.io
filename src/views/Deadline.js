@@ -45,19 +45,28 @@ function Deadline ({ miners, client, head }) {
     }
 
     let mounted = true
+    let firstTime = true
+    const continueLoad = () => firstTime || mounted
 
-    const epochs = [...Array(28)].map((_, i) => ({
+    const epochs = [...Array(38)].map((_, i) => ({
       height: head.Height - i * 2880,
       day: i
     }))
 
+    if (todayDeadlines) {
+      if (head.Height < todayDeadlines.deadlines[deadlineId].Close) {
+        console.log(head.Height, todayDeadlines.deadlines[deadlineId].Close)
+        return
+      }
+    }
+
     try {
-      asyncPool(10, epochs, async ({ day, height }) => {
+      asyncPool(40, epochs, async ({ day, height }) => {
         try {
           const prevHead = await client.fetchTipsetHead(height)
-          if (!mounted) return
+          if (!continueLoad()) return
           const deadlines = await client.fetchDeadlines(minerId, prevHead)
-          if (!mounted) return
+          if (!continueLoad()) return
           minerDeadlines[day] = deadlines
           setMinerDeadlines({ ...minerDeadlines })
           if (day === 0) {
@@ -75,7 +84,7 @@ function Deadline ({ miners, client, head }) {
     return () => {
       mounted = false
     }
-  }, [client, head, minerId, deadlineId])
+  }, [client, head, minerId, deadlineId, todayDeadlines])
 
   return (
     <section className='container'>

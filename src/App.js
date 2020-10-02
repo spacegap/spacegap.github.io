@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { HashRouter as Router, Switch, Route, Link } from 'react-router-dom'
 
 import Filecoin from './services/filecoin'
-import Drand from './services/drand'
 
 import Home from './views/Home'
 import Status from './views/Status'
@@ -14,21 +13,12 @@ import TinySummary from './components/TinySummary'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './App.scss'
 
-function getFilecoinExpectedHeight () {
-  const filGenesis = new Date('2020-08-24 22:00:00Z').getTime()
-  return Math.floor((Date.now() - filGenesis) / 1000 / 30)
-}
-
 function App () {
   console.log('reloaded')
   const [miners, setMiners] = useState()
   const [head, setHead] = useState()
-  const [round, setRound] = useState()
   const [node, setNode] = useState('wss://node.glif.io/space07/lotus/rpc/v0')
   const [client, setFilClient] = useState(new Filecoin(node))
-  const [filExpectedHeight, setFilExpectedHeight] = useState(
-    getFilecoinExpectedHeight()
-  )
   const [spa, setSpa] = useState()
 
   useEffect(() => {
@@ -66,20 +56,6 @@ function App () {
         console.log('   new block', fetched.Height, head && head.Height)
         setHead(fetched)
       })
-
-      Drand().then(fetched => {
-        if (!mounted) return
-        if (round && fetched.current === round.current) {
-          console.log('   repeated drand, skip')
-          return
-        }
-        console.log('   new drand', fetched)
-        setRound(fetched)
-      })
-
-      if (getFilecoinExpectedHeight() !== filExpectedHeight) {
-        setFilExpectedHeight(getFilecoinExpectedHeight())
-      }
     }
 
     fetchingHead()
@@ -95,7 +71,7 @@ function App () {
       clearInterval(interval)
       console.log('removing interval')
     }
-  }, [client, head, round])
+  }, [client, head])
 
   return (
     <Router>
@@ -119,7 +95,7 @@ function App () {
               </select>
             </div>
           </div>
-          <TinySummary head={head} expected={filExpectedHeight} round={round} />
+          <TinySummary client={client} head={head} />
         </div>
         <header className='container-fluid'>
           <Link to='/'>
