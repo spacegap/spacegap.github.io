@@ -110,17 +110,6 @@ function Deadline ({ miners, client, head }) {
           {minerDeadlines && minerDeadlines[0] && (
             <Summary
               title={`${f2(
-                (+minerDeadlines[0].deadlines[deadlineId].TotalSectors * 32) /
-                  1024
-              )} TiB`}
-              desc={`${f(
-                minerDeadlines[0].deadlines[deadlineId].TotalSectors
-              )} Total Sectors`}
-            />
-          )}
-          {minerDeadlines && minerDeadlines[0] && (
-            <Summary
-              title={`${f2(
                 +minerDeadlines[0].deadlines[deadlineId].FaultyPower.Raw /
                   (1024 * 1024 * 1024 * 1024)
               )} TiB`}

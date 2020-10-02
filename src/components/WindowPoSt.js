@@ -17,7 +17,7 @@ export default function WindowPoSt ({ minerId, deadlines, head, link, out }) {
         deadlines.map((d, i) => (
           <div
             key={i}
-            className={d.TotalSectors === 0 ? 'deadline opacity5' : 'deadline'}
+            className={d.LiveSectors === 0 ? 'deadline opacity5' : 'deadline'}
           >
             <Link to={link(d)}>
               <div className='out'>
@@ -26,14 +26,14 @@ export default function WindowPoSt ({ minerId, deadlines, head, link, out }) {
               </div>
               <div className='hddWrapper'>
                 <div className='in'>
-                  {Math.round((d.TotalSectors * 32) / 1024)} TiB
+                  {Math.round((d.LiveSectors * 32) / 1024)} TiB
                 </div>
                 <div className='hdds'>
                   {[
                     ...Array(
                       Math.ceil(
                         Math.round(
-                          (d.TotalSectors * 32) / 1024 -
+                          (d.LiveSectors * 32) / 1024 -
                             +d.FaultyPower.Raw / (1024 * 1024 * 1024 * 1024)
                         ) / 8
                       )
@@ -61,7 +61,7 @@ export default function WindowPoSt ({ minerId, deadlines, head, link, out }) {
               </div>
               {/* <div className="partitions">
                             {
-                            [...Array(Math.ceil(d.TotalSectors/2349))].map(v =>
+                            [...Array(Math.ceil(d.LiveSectors/2349))].map(v =>
                             <div className='partition'></div>
                             )
                             }

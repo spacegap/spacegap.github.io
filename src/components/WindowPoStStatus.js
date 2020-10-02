@@ -5,21 +5,21 @@ export default function WindowPoStStatus ({ deadline, head }) {
 
   return (
     <div className='deadlines windowpost'>
-      <div className={d.TotalSectors === 0 ? 'deadline opacity5' : 'deadline'}>
+      <div className={d.LiveSectors === 0 ? 'deadline opacity5' : 'deadline'}>
         <div className='out'>
           In {d.Close - head.Height}
           {/* <span className="epochs">epochs</span> */}
         </div>
         <div className='hddWrapper'>
           <div className='in'>
-            {Math.round((d.TotalSectors * 32) / 1024)} TiB
+            {Math.round((d.LiveSectors * 32) / 1024)} TiB
           </div>
           <div className='hdds'>
             {[
               ...Array(
                 Math.ceil(
                   Math.round(
-                    (d.TotalSectors * 32) / 1024 -
+                    (d.LiveSectors * 32) / 1024 -
                       +d.FaultyPower.Raw / (1024 * 1024 * 1024 * 1024)
                   ) / 8
                 )

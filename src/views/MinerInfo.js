@@ -157,7 +157,7 @@ function MinerInfo ({ client, miners, head }) {
                 </li>
                 <li>
                   Sectors to Prove:{' '}
-                  {miner.deadlines.nextDeadlines[0].TotalSectors}
+                  {miner.deadlines.nextDeadlines[0].LiveSectors}
                 </li>
                 <li>Current Deadline: {miner.deadlines.deadline.Index}</li>
                 <li>
@@ -177,9 +177,6 @@ function MinerInfo ({ client, miners, head }) {
               </ul>
             </div>
             <div className='col'>
-              {/* {miner.deadlines.nextDeadlines
-                .map(d => +d.TotalSectors)
-                .find(d => d !== 0)} */}
               <WindowPoSt
                 minerId={minerId}
                 deadlines={[miner.deadlines.nextDeadlines[0]]}
