@@ -15,7 +15,7 @@ const schema = require('@filecoin-shipyard/lotus-client-schema').testnet
   .fullNode
 
 function b64ToBn (b64) {
-  if (b64 === '') return 0n
+  if (b64 === '') return window.BigInt(0)
   var bin = atob(b64)
   var hex = []
 
@@ -286,10 +286,12 @@ export default class Filecoin {
   }
 
   async fetchDeadlines (hash, head) {
+    console.log('to fetch', hash, head)
     const [deadline, deadlines] = await Promise.all([
       this.client.StateMinerProvingDeadline(hash, head.Cids),
       this.fetchDeadlinesProxy(hash, head)
     ])
+    console.log('fetched', hash, head)
 
     const nextDeadlines = [...Array(48)].map((_, i) => ({
       ...deadlines[(deadline.Index + i) % 48],

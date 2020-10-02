@@ -16,7 +16,7 @@ function MinerInfo ({ client, miners, head }) {
 
   // On new (hash or head): fetch miner
   useEffect(() => {
-    if (!minerId || !head) {
+    if (!minerId || !head || !client) {
       return
     }
 
@@ -25,17 +25,13 @@ function MinerInfo ({ client, miners, head }) {
     const fetchInfo = () => {
       setMiner({ ...miner })
 
-      client
-        .fetchDeadlines(minerId, head)
-        .then(deadlines => {
-          if (mounted) {
-            miner.deadlines = deadlines
-            setMiner({ ...miner })
-          }
-        })
-        .catch(err => {
-          console.error('failed to load deadline', err)
-        })
+      client.fetchDeadlines(minerId, head).then(deadlines => {
+        if (mounted) {
+          miner.deadlines = deadlines
+          setMiner({ ...miner })
+          console.log('deadlines setting')
+        }
+      })
 
       client.fetchDeposits(minerId, head).then(deposits => {
         if (mounted) {
