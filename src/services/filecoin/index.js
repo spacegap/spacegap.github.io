@@ -179,7 +179,7 @@ export default class Filecoin {
   }
 
   async fetchHead () {
-    return await this.client.chainHead()
+    return this.client.chainHead()
   }
 
   async fetchPartitionsSectors (cid) {
@@ -363,4 +363,34 @@ export default class Filecoin {
     const sectorsCount = Object.keys(Sectors).length
     return { sectorsCount, Sectors }
   }
+
+  async parentMessages(cid) {
+      return this.client.chainGetParentMessages(cid)
+  }
+ 
+
+  async receiptParentMessages(cid) {
+      return this.client.chainGetParentReceipts(cid)
+  }
+
+  async parentAndReceiptsMessages(cid, ...methods) {
+      const msgs = await this.parentMessages(cid)
+      const receipts = await this.receiptParentMessages(cid)
+      if (msgs.length != receipts.length) {
+          throw new Error("invalid length")
+      }
+      return zip(msgs,receipts).filter(entry =>  {
+          const [tx,r] = entry
+          const exit =  r.ExitCode == 0
+          var inMethod = true
+          if (methods.length > 0) {
+              inMethod =  methods.includes(tx.Message.Method)
+          }
+          return exit && inMethod
+      })
+  }
+}
+
+const zip = (arr, ...arrs) => {
+  return arr.map((val, i) => arrs.reduce((a, arr) => [...a, arr[i]], [val]));
 }

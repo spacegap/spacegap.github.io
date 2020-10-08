@@ -22,6 +22,9 @@ export default function Home ({ miners }) {
         See deadlines of <Link to='/full'>top 50 miners</Link> or click on
         individual miners or the <Link to='/status'>network status</Link>.
       </div>
+      <div className="row">
+        See <Link to='/gas'> here </Link> for a detailled gas analysis.
+      </div>
     </section>
   )
 }

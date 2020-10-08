@@ -9,6 +9,7 @@ import Full from './views/Full'
 import Deadline from './views/Deadline'
 import MinerInfo from './views/MinerInfo'
 import TinySummary from './components/TinySummary'
+import Gas from './views/Gas'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './App.scss'
@@ -17,7 +18,8 @@ function App () {
   console.log('reloaded')
   const [miners, setMiners] = useState()
   const [head, setHead] = useState()
-  const [node, setNode] = useState('wss://node.glif.io/space07/lotus/rpc/v0')
+  //const [node, setNode] = useState('wss://node.glif.io/space07/lotus/rpc/v0')
+  const [node, setNode] = useState('wss://lotus.jimpick.com/spacerace_api/0/node/rpc/v0')
   const [client, setFilClient] = useState(new Filecoin(node))
   const [spa, setSpa] = useState()
 
@@ -104,23 +106,28 @@ function App () {
             </h1>
           </Link>
         </header>
-        <Switch>
-          <Route path='/miners/:minerId/deadlines/:deadlineId'>
-            <Deadline client={client} miners={miners} head={head} />
-          </Route>
-          <Route path='/miners/:minerId'>
-            <MinerInfo client={client} miners={miners} head={head} />
-          </Route>
-          <Route path='/full'>
-            <Full client={client} miners={miners} />
-          </Route>
-          <Route path='/status'>
-            <Status head={head} spa={spa} client={client} miners={miners} />
-          </Route>
-          <Route path='/'>
-            <Home miners={miners} />
-          </Route>
-        </Switch>
+        <div className="container">
+          <Switch>
+            <Route path='/miners/:minerId/deadlines/:deadlineId'>
+              <Deadline client={client} miners={miners} head={head} />
+            </Route>
+            <Route path='/miners/:minerId'>
+              <MinerInfo client={client} miners={miners} head={head} />
+            </Route>
+            <Route path='/full'>
+              <Full client={client} miners={miners} />
+            </Route>
+            <Route path='/status'>
+              <Status head={head} spa={spa} client={client} miners={miners} />
+            </Route>
+           <Route path='/gas' >
+              <Gas client={client} head={head} />
+            </Route>
+            <Route path='/'>
+              <Home miners={miners} />
+            </Route>
+          </Switch>
+        </div>
       </div>
     </Router>
   )
