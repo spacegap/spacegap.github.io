@@ -29,10 +29,27 @@ function Gas({client,head}) {
 
     return (
         <div className="row">
-            <p className="text-center"> Average gas of WindowPoSt tx: {avgGas.wpost} gas </p>
-            <p className="text-center"> Average gas of PreCommit tx: {avgGas.pre} gas </p>
-            <p className="text-center"> Average gas of ProveCommit tx: {avgGas.prove} gas </p>
+            <div className="col-3"> </div>
+            <div className="col-6">
+                <table className="table">
+                    <tbody>
+                        <GasIndicator name="Average gas of WindowPoSt tx:" value={avgGas.wpost} />
+                        <GasIndicator name="Average gas of PreCommit tx:" value={avgGas.pre} />
+                        <GasIndicator name="Average gas of ProveCommit tx:" value={avgGas.prove} />
+                    </tbody>
+                </table>
+            </div>
+            
         </div>
+    )
+}
+
+function GasIndicator(props) {
+    return (
+        <tr> 
+            <td> {props.name} </td>
+            <td> {props.value} </td>
+        </tr>
     )
 }
 
