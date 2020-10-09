@@ -9,8 +9,10 @@ function Gas({client,head}) {
     const headers = ["", "Average Count", "Average GasUsed ", 
                     "Ratio over total GasUsed", 
                     "Average GasLimit",
-                    "Ratio over total GasLimit",
-                    "GasLimit over BlockLimit"]
+                    "Ratio avg over total GasLimit",
+                    "Ratio GasUsed over GasLimit",
+                    "Ratio GasLimit over BlockLimit",
+                    ]
     const empty = Array(headers.length-1).fill(0)
     const [avgGas, setAvgGas] = useState({headers:headers,total:empty,wpost:empty,pre:empty,prove:empty})
     const [stats, setStat] = useState(undefined)
@@ -34,6 +36,7 @@ function Gas({client,head}) {
             const gasLimit = await nstats.avgGasLimit(...method)
             const ratioUsed = await nstats.avgRatioUsedOverTotalUsed(...method)
             const ratioLimit = await nstats.avgRatioLimitOverTotalLimit(...method)
+            const ratioUsedLimit = await nstats.avgRatioUsedOverLimit(...method)
             const ratioBlockLimit = await nstats.avgTotalGasLimitOverTipsetLimit(...method)
             return [
                 nTx,
@@ -41,6 +44,7 @@ function Gas({client,head}) {
                 ratioUsed,
                 gasLimit,
                 ratioLimit,
+                ratioUsedLimit,
                 ratioBlockLimit, 
             ]    
         }
@@ -51,7 +55,6 @@ function Gas({client,head}) {
         results.wpost = await computeEntry(5)
         results.pre = await computeEntry(6)
         results.prove = await computeEntry(7)
-        console.log("RESULTS: ",results)
         setAvgGas(results)
     }
 
@@ -93,6 +96,7 @@ function Gas({client,head}) {
                         <li className="list-group-item"><b>Ratio over total GasUsed:</b> Precedent number divided by the total gas used accross all epochs</li>
                         <li className="list-group-item"><b>Average GasLimit:</b> gas limit set per transaction of the method</li>
                         <li className="list-group-item"><b>Ratio over total GasLimit:</b> Precedent number divided by the total gas used accross all epochs</li>
+                        <li className="list-group-item"><b>Ratio GasUsed over GasLimit:</b> Total gas used for the method over total gas limit set accross all epoch</li>
                         <li className="list-group-item"><b>Total GasLimit over BlockLimit:</b> precedent number divided by total gas limit set per epoch</li>
                     </ul> 
                 </div>
@@ -203,10 +207,16 @@ class Stats {
             const totalGasLimit = msgs.reduce((total,tup) => total + tup[0].Message.GasLimit,0)
             const nbBlocks = tipset.Cids.length
             const ratio = totalGasLimit / (blockLimit * nbBlocks)
-            ratios = ratios.concat(ratio)
+            ratios.push(ratio)
         }
         // make the average
         return ratios.reduce((acc,v) => acc + v,0) / ratios.length
     }
 
+    async avgRatioUsedOverLimit(...method) {
+        const used = (await this.transactions(...method)).reduce((acc,v) => acc + v[1].GasUsed,0)
+        const limit = (await this.transactions(...method)).reduce((acc,v) => acc + v[0].Message.GasLimit,0)
+        return used / limit
+
+    }
 }
