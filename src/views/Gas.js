@@ -11,6 +11,7 @@ function Gas({client,head}) {
                     "Average GasLimit",
                     "Ratio avg over total GasLimit",
                     "Ratio GasUsed over GasLimit",
+                    "Ratio GasUsed over BlockLimit",
                     "Ratio GasLimit over BlockLimit",
                     ]
     const empty = Array(headers.length-1).fill(0)
@@ -37,6 +38,7 @@ function Gas({client,head}) {
             const ratioUsed = await nstats.avgRatioUsedOverTotalUsed(...method)
             const ratioLimit = await nstats.avgRatioLimitOverTotalLimit(...method)
             const ratioUsedLimit = await nstats.avgRatioUsedOverLimit(...method)
+            const ratioUsedBlockLimit = await nstats.avgTotalGasUsedOverTipsetLimit(...method)
             const ratioBlockLimit = await nstats.avgTotalGasLimitOverTipsetLimit(...method)
             return [
                 nTx,
@@ -45,6 +47,7 @@ function Gas({client,head}) {
                 gasLimit,
                 ratioLimit,
                 ratioUsedLimit,
+                ratioUsedBlockLimit,
                 ratioBlockLimit, 
             ]    
         }
@@ -97,6 +100,7 @@ function Gas({client,head}) {
                         <li className="list-group-item"><b>Average GasLimit:</b> gas limit set per transaction of the method</li>
                         <li className="list-group-item"><b>Ratio over total GasLimit:</b> Precedent number divided by the total gas used accross all epochs</li>
                         <li className="list-group-item"><b>Ratio GasUsed over GasLimit:</b> Total gas used for the method over total gas limit set accross all epoch</li>
+                        <li className="list-group-item"><b>Total GasUsed over BlockLimit:</b> Total gas used divided by total gas limit set per epoch</li>
                         <li className="list-group-item"><b>Total GasLimit over BlockLimit:</b> precedent number divided by total gas limit set per epoch</li>
                     </ul> 
                 </div>
@@ -212,6 +216,21 @@ class Stats {
         // make the average
         return ratios.reduce((acc,v) => acc + v,0) / ratios.length
     }
+
+    async avgTotalGasUsedOverTipsetLimit(...method) {
+        var ratios = []
+        for (var height in this.tipsets) {
+            const tipset = this.tipsets[height]
+            const msgs = await this.fetcher.parentAndReceiptsMessages(tipset.Cids[0],...method)
+            const totalGasUsed = msgs.reduce((total,tup) => total + tup[1].GasUsed,0)
+            const nbBlocks = tipset.Cids.length
+            const ratio = totalGasUsed / (blockLimit * nbBlocks)
+            ratios.push(ratio)
+        }
+        // make the average
+        return ratios.reduce((acc,v) => acc + v,0) / ratios.length
+    }
+
 
     async avgRatioUsedOverLimit(...method) {
         const used = (await this.transactions(...method)).reduce((acc,v) => acc + v[1].GasUsed,0)
