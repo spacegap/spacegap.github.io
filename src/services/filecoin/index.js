@@ -165,6 +165,8 @@ export default class Filecoin {
     const provider = new BrowserProvider(endpointUrl)
     console.log('new endpoint', endpointUrl)
     this.client = new LotusRPC(provider, { schema })
+    this.parents = {}
+    this.receipts = {}
   }
 
   async getData (head, path, schema) {
@@ -365,12 +367,22 @@ export default class Filecoin {
   }
 
   async parentMessages(cid) {
-      return this.client.chainGetParentMessages(cid)
+      if (cid["/"] in this.parents) {
+          return this.parents[cid["/"]]
+      }
+      const msgs = await this.client.chainGetParentMessages(cid)
+      this.parents[cid["/"]] = msgs
+      return msgs
   }
  
 
   async receiptParentMessages(cid) {
-      return this.client.chainGetParentReceipts(cid)
+      if (cid["/"] in this.receipts) {
+          return this.receipts[cid["/"]]
+      }
+      const r = await this.client.chainGetParentReceipts(cid)
+      this.receipts[cid["/"]] = r
+      return r
   }
 
   async parentAndReceiptsMessages(cid, ...methods) {
