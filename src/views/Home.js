@@ -23,7 +23,7 @@ export default function Home ({ miners }) {
         individual miners or the <Link to='/status'>network status</Link>.
       </div>
       <div className="row">
-        See <Link to='/gas'> here </Link> for a detailled gas analysis.
+        See <Link to='/gas'> here </Link> for a detailed gas analysis.
       </div>
     </section>
   )
