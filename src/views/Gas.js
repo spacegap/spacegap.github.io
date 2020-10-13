@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { withRouter } from 'react-router-dom'
+import Chart from 'chart.js';
+import $ from 'jquery';
 
 // number of consecutive block we take the average from 
 const averageLength = 3
@@ -20,7 +22,21 @@ function Gas({client,head}) {
 
     return (
         <div className="row">
-            <div className="accordion" id="accordionExample">
+            <div className="accordion col-12" id="accordionExample">
+                    <div className="card">
+                    <div className="card-header" id="biggestGas">
+                      <h2>
+                        <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseBiggest" aria-expanded="true" aria-controls="collapseBiggest">
+                            Biggest gas users
+                        </button>
+                      </h2>
+                    </div>
+                    <div id="collapseBiggest" className="collapse" aria-labelledby="biggestGas" data-parent="#accordionExample">
+                        <div className="card-body">
+                            <BiggestGasSpender nstats={stats} head={head} />
+                        </div>
+                    </div>
+                </div>
                 <div className="card">
                     <div className="card-header" id="headingOne">
                       <h2>
@@ -41,7 +57,78 @@ function Gas({client,head}) {
 }
 
 function BiggestGasSpender({head,nstats}) {
+    const [dataset,setData] = useState({})
+    const [opts,setOpts] = useState({})
+    const [pie,setPie] = useState(undefined)
+    const maxUser = 10
+    const id = "pieBiggestGas"
+
+    const setCollapseEvent = pie => {
+        // XXX This is bad because it requires names of ID to be constant but 
+        // it'll do for now
+        $("#collapseBiggest").on('show.bs.collapse', function () {
+            pie.update();
+        });
+        $("#collapseBiggest").on('hide.bs.collapse', function () {
+            pie.update();
+        });
+    }
+
+    const fillDataset = async () => {
+        const allHeights = await nstats.biggestGasUserFor() 
+        if (Object.keys(allHeights).length < 1) {
+            return
+        }
+        const sortedHeight = Object.keys(allHeights).sort((a,b) => b - a)
+        const data = allHeights[sortedHeight[0]]
+        const rawData = data.slice(0,maxUser).map((d) => d[1])
+        const datasets= [
+            {
+                data: rawData,
+                backgroundColor: objectMap(chartColors,(color,name) => color).slice(0,maxUser),
+                label: "transaction gas",
+            }
+        ]
+        const labels = data.slice(0,maxUser).map((d) => d[0])
+        const newOpts = {
+            title: {
+                display: true,
+                text: `Gas usage at height ${sortedHeight[0]}`,
+            }
+        }
+        const newDataset = { 
+            datasets: datasets,
+            labels: labels,
+        }
+        setOpts(newOpts)
+        setData(newDataset)
+
+        if (pie == undefined) {
+            var ctx = document.getElementById(id).getContext('2d');
+            const newPie = new Chart(ctx, {
+                type: 'doughnut',
+                data: newDataset,
+                options: newOpts, 
+            });
+            setPie(newPie)
+            setCollapseEvent(newPie)
+        } else {
+            pie.data.datasets[0].data = rawData
+            pie.options = newOpts
+            pie.update()
+            setCollapseEvent(pie)
+            setPie(pie)
+        }
+    }
+
+    useEffect(() => { fillDataset() },[head,nstats])
     
+    return (
+        <div className="col-12">
+            { pie == undefined && <p> Loading.... </p> }
+            <canvas id={id}>Loading...</canvas>
+        </div>
+    )
 }
 
 function GasTable({nstats,head}) {
@@ -155,14 +242,6 @@ function GasRow(props) {
     )
 }
 
-// MinerGas shows the curret distribution of gas used per miner on the last two
-// heights and allows to fetch more detailled information about price a miner
-// must pay daily to prove its storage
-function MinerGas({client,head}) {
-
-}
-//const value = (v) => isNaN(v) ? : "loading..." : v
-
 export default withRouter(Gas)
 
 class Stats {
@@ -273,4 +352,44 @@ class Stats {
         return used / limit
 
     }
+
+    async biggestGasUserFor(...methods) {
+        var datas = {}
+        for (var height in this.tipsets) {
+            const msgs = await this.transactions(...methods)
+            var users = msgs.reduce((acc, tuple) => {
+                if (acc[tuple[0].Message.To] == undefined) {
+                    acc[tuple[0].Message.To] = 0
+                }
+                acc[tuple[0].Message.To] += tuple[1].GasUsed
+                return acc
+            },{})
+            // combinatio of mapping over dict
+            // https://stackoverflow.com/questions/14810506/map-function-for-objects-instead-of-arrays
+            // and sorting in decreasing order
+            // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort
+            const sorted = objectMap(users, (gas,user) => [user,gas]).sort((a,b) => b[1] - a[1])
+            datas[height] = sorted
+            console.log("Biggest txs at height",height," -> ",sorted.slice(0,10))
+        }
+        return datas
+    }
+
 }
+
+export function objectMap(obj, fn) {
+    return Object.entries(obj).map(
+      ([k, v], i) => fn(v, k, i)
+    )
+}
+
+const chartColors = {
+	red: 'rgb(255, 99, 132)',
+	orange: 'rgb(255, 159, 64)',
+	yellow: 'rgb(255, 205, 86)',
+	green: 'rgb(75, 192, 192)',
+	blue: 'rgb(54, 162, 235)',
+	purple: 'rgb(153, 102, 255)',
+	grey: 'rgb(201, 203, 207)'
+};
+

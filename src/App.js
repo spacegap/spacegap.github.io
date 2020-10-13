@@ -12,7 +12,6 @@ import TinySummary from './components/TinySummary'
 import Gas from './views/Gas'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
-import $ from 'jquery';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import './App.scss'
 
@@ -68,7 +67,7 @@ function App () {
       if (mounted) {
         fetchingHead()
       }
-    }, 5000)
+    }, 15000)
 
     return () => {
       mounted = false
