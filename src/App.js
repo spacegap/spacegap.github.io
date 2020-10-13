@@ -19,6 +19,7 @@ function App () {
   const [miners, setMiners] = useState()
   const [head, setHead] = useState()
   const [node, setNode] = useState('wss://node.glif.io/space07/lotus/rpc/v0')
+  //const [node, setNode] = useState('wss://lotus.jimpick.com/spacerace_api/0/node/rpc/v0')
   const [client, setFilClient] = useState(new Filecoin(node))
   const [spa, setSpa] = useState()
 

@@ -2,10 +2,31 @@ import React, { useState, useEffect } from 'react'
 import { withRouter } from 'react-router-dom'
 
 // number of consecutive block we take the average from 
-const averageLength = 1
+const averageLength = 3
 const blockLimit = 5* 10**9
 
 function Gas({client,head}) {
+    const [stats, setStat] = useState(undefined)
+
+    const initStats = async () => {
+        const newStats = new Stats(client, averageLength, head)
+        await newStats.fetchCids()
+        setStat(newStats)
+        return newStats
+    }
+
+    useEffect( () =>  {
+        initStats()
+    },[client,head])
+
+    return (
+        <div className="row">
+            <GasTable nstats={stats} head={head} />
+        </div>
+    )
+}
+
+function GasTable({head,nstats}) {
     const headers = ["", "Average Count", "Average GasUsed ", 
                     "Ratio over total GasUsed", 
                     "Average GasLimit",
@@ -16,18 +37,8 @@ function Gas({client,head}) {
                     ]
     const empty = Array(headers.length-1).fill(0)
     const [avgGas, setAvgGas] = useState({headers:headers,total:empty,wpost:empty,pre:empty,prove:empty})
-    const [stats, setStat] = useState(undefined)
 
-    const initStats = async () => {
-        const newStats = new Stats(client, averageLength, head)
-        await newStats.fetchCids()
-        setStat(newStats)
-        return newStats
-    }
-
-    
     const updateAverage = async () =>  {
-        const nstats = await initStats()
         const totalGasUsed = await nstats.avgTotalGasUsed()
         const totalGasLimit = await nstats.avgGasLimit()
 
@@ -51,7 +62,6 @@ function Gas({client,head}) {
                 ratioBlockLimit, 
             ]    
         }
-
         const results = {}
         results.headers = headers
         results.total = await computeEntry()
@@ -60,10 +70,6 @@ function Gas({client,head}) {
         results.prove = await computeEntry(7)
         setAvgGas(results)
     }
-
-    useEffect( () => {
-        updateAverage()
-    },[head])
 
     const drawHeaders = (v) => v.map((h) => (<th key={h}> {h} </th>));
 
@@ -82,10 +88,10 @@ function Gas({client,head}) {
                             </tr>
                         </thead>
                         <tbody>
-                            <GasIndicator name="Total gas used:" values={avgGas.total} />
-                            <GasIndicator name="WindowPoSt:" values={avgGas.wpost} />
-                            <GasIndicator name="PreCommit:" values={avgGas.pre} />
-                            <GasIndicator name="ProveCommit:" values={avgGas.prove} />
+                            <GasRow name="Total gas used:" values={avgGas.total} />
+                            <GasRow name="WindowPoSt:" values={avgGas.wpost} />
+                            <GasRow name="PreCommit:" values={avgGas.pre} />
+                            <GasRow name="ProveCommit:" values={avgGas.prove} />
                         </tbody>
                     </table>
                 </div>
@@ -107,9 +113,11 @@ function Gas({client,head}) {
             </div>
         </div>
     )
+
 }
 
-function GasIndicator(props) {
+// GasRow is simply a row of the table filled by the main table 
+function GasRow(props) {
     const showValues = vv => vv.map((v,idx) => (
         <td key={idx.toString()}>
             {(isNaN(v) || Math.ceil(v) == v) ? v : v.toFixed(2) }
@@ -125,6 +133,12 @@ function GasIndicator(props) {
     )
 }
 
+// MinerGas shows the curret distribution of gas used per miner on the last two
+// heights and allows to fetch more detailled information about price a miner
+// must pay daily to prove its storage
+function MinerGas({client,head}) {
+
+}
 //const value = (v) => isNaN(v) ? : "loading..." : v
 
 export default withRouter(Gas)
