@@ -6,27 +6,45 @@ const averageLength = 3
 const blockLimit = 5* 10**9
 
 function Gas({client,head}) {
-    const [stats, setStat] = useState(undefined)
+    const [stats, setStat] = useState(new Stats(client, averageLength))
 
-    const initStats = async () => {
-        const newStats = new Stats(client, averageLength, head)
-        await newStats.fetchCids()
-        setStat(newStats)
-        return newStats
+    const updateStats = async () => {
+        const s = stats
+        await s.fetchCids()
+        setStat(s)
     }
 
     useEffect( () =>  {
-        initStats()
+        updateStats()
     },[client,head])
 
     return (
         <div className="row">
-            <GasTable nstats={stats} head={head} />
+            <div className="accordion" id="accordionExample">
+                <div className="card">
+                    <div className="card-header" id="headingOne">
+                      <h2>
+                        <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                            Gas usage table
+                        </button>
+                      </h2>
+                    </div>
+                    <div id="collapseOne" className="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
+                        <div className="card-body">
+                            <GasTable nstats={stats} head={head} />
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }
 
-function GasTable({head,nstats}) {
+function BiggestGasSpender({head,nstats}) {
+    
+}
+
+function GasTable({nstats,head}) {
     const headers = ["", "Average Count", "Average GasUsed ", 
                     "Ratio over total GasUsed", 
                     "Average GasLimit",
@@ -38,7 +56,7 @@ function GasTable({head,nstats}) {
     const empty = Array(headers.length-1).fill(0)
     const [avgGas, setAvgGas] = useState({headers:headers,total:empty,wpost:empty,pre:empty,prove:empty})
 
-    const updateAverage = async () =>  {
+    const updateAverage = async (nstats) =>  {
         const totalGasUsed = await nstats.avgTotalGasUsed()
         const totalGasLimit = await nstats.avgGasLimit()
 
@@ -70,6 +88,10 @@ function GasTable({head,nstats}) {
         results.prove = await computeEntry(7)
         setAvgGas(results)
     }
+
+    useEffect( () => {
+        updateAverage(nstats)
+    },[nstats,head])
 
     const drawHeaders = (v) => v.map((h) => (<th key={h}> {h} </th>));
 
@@ -144,10 +166,9 @@ function MinerGas({client,head}) {
 export default withRouter(Gas)
 
 class Stats {
-    constructor(client, average,head) {
+    constructor(client, average) {
         this.fetcher = client
         this.average = average
-        this.head = head
         this.tipsets = {}
     }
 
@@ -164,7 +185,7 @@ class Stats {
             this.tipsets[tipset.Height] = tipset
             console.log(i,"/",this.average,": init fetched tipset at height ", tipset.Height, " with [0] = ",tipset)
         }
-        console.log("Stats: got " + this.tipsets.length + " tipset CIDs to make stats from")
+        console.log("Stats: got " + Object.keys(this.tipsets).length + " tipset CIDs to make stats from")
     }
 
     // returns the average gas used of a given method

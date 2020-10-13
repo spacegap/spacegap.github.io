@@ -12,6 +12,8 @@ import TinySummary from './components/TinySummary'
 import Gas from './views/Gas'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
+import $ from 'jquery';
+import 'bootstrap/dist/js/bootstrap.bundle.min';
 import './App.scss'
 
 function App () {
@@ -32,13 +34,13 @@ function App () {
     reload()
   }, [node])
 
-  useEffect(() => {
-    if (!head) return
+/*  useEffect(() => {*/
+    //if (!head) return
 
-    client.fetchPower(head).then(power => {
-      setSpa(power)
-    })
-  }, [head, client])
+    //client.fetchPower(head).then(power => {
+      //setSpa(power)
+    //})
+  //}, [head, client])
 
   useEffect(() => {
     let mounted = true
