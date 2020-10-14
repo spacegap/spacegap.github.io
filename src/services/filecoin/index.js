@@ -167,6 +167,7 @@ export default class Filecoin {
     this.client = new LotusRPC(provider, { schema })
     this.parents = {}
     this.receipts = {}
+    this.minfo = {}
   }
 
   async getData (head, path, schema) {
@@ -400,6 +401,16 @@ export default class Filecoin {
           }
           return exit && inMethod
       })
+  }
+
+  async getMinerPower(tipset,height,miner) {
+    if (tipset["/"] in this.minfo) {
+        return this.minfo[tipset["/"]]
+    }
+    //let m = await this.client.minerGetBaseInfo(miner,height,tipset)
+    let m = await this.client.stateMinerPower(miner,tipset)
+    this.minfo[tipset["/"]] = m
+    return m
   }
 }
 

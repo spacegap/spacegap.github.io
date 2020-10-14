@@ -22,10 +22,84 @@ function Gas({client,head}) {
     return (
         <div className="row">
             <div className="accordion col-12" id="accordionExample">
+                <MinerInfoCard nstats={stats} />
                 <BiggestGasSpenderCard nstats={stats} head={head} />
                 <GasTableCard nstats={stats} head={head} />
             </div>
         </div>
+    )
+}
+
+function MinerInfoCard({nstats}) {
+    const headers = ["Miner", 
+        "Raw Byte Power",
+        "Ratio over total raw power",
+        "Size",
+        "Daily gas required (wpost)"
+    ]
+
+    const [minerAddr, setAddr] = useState('');
+    const [data,setData] = useState({})
+
+    const drawHeaders = (v) => v.map((h) => (<th key={h}> {h} </th>));
+    const searchMiner = async () => {
+        console.log("search miner for ",minerAddr)      
+        const res = await  nstats.minerInfo(minerAddr)
+        setData(res)
+    }
+
+    return (
+    <div className="card">
+        <div className="card-header" id="minerInfo">
+            <h2>
+            <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseInfo" aria-expanded="true" aria-controls="collapseInfo">
+                Miner info search
+            </button>
+            </h2>
+        </div>
+        <div id="collapseInfo" className="collapse" aria-labelledby="minerInfo" data-parent="#accordionExample">
+            <div className="card-body">
+                <div className="row">
+                    <div className="col-4"> </div>
+                    <form>
+                    <div className="form-group">
+                        <label for="minerAddress">Miner address</label>
+                        <input  value={minerAddr} 
+                                onChange={e => setAddr(e.target.value)}
+                                type="text" 
+                                className="form-control" 
+                                placeholder="Enter miner address" />
+                    </div>
+                    <button onClick={searchMiner} 
+                            type="submit" 
+                            className="btn btn-primary">
+                        Search
+                    </button>
+                    </form>
+                </div>
+                <div className="row">
+                    <div className="col-12">
+                        <table className="table table-hover">
+                            <thead>
+                                <tr>
+                                { drawHeaders(headers) }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                 <tr> 
+                                    <td> {minerAddr} </td>
+                                    <td> {data.raw} </td>
+                                    <td> {data.ratio} </td>
+                                    <td> {data.size} </td>
+                                    <td> {data.dailyGas} </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     )
 }
 
@@ -192,10 +266,10 @@ function GasTableCard({nstats,head}) {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <GasRow name="Total gas used:" values={avgGas.total} />
-                                        <GasRow name="WindowPoSt:" values={avgGas.wpost} />
-                                        <GasRow name="PreCommit:" values={avgGas.pre} />
-                                        <GasRow name="ProveCommit:" values={avgGas.prove} />
+                                        <RowInfo name="Total gas used:" values={avgGas.total} />
+                                        <RowInfo name="WindowPoSt:" values={avgGas.wpost} />
+                                        <RowInfo name="PreCommit:" values={avgGas.pre} />
+                                        <RowInfo name="ProveCommit:" values={avgGas.prove} />
                                     </tbody>
                                 </table>
                             </div>
@@ -224,8 +298,8 @@ function GasTableCard({nstats,head}) {
 
 }
 
-// GasRow is simply a row of the table filled by the main table 
-function GasRow(props) {
+// RowInfo is simply a row of the table filled by the main table 
+function RowInfo(props) {
     const showValues = vv => vv.map((v,idx) => (
         <td key={idx.toString()}>
             {(isNaN(v) || Math.ceil(v) == v) ? v : v.toFixed(2) }
@@ -276,6 +350,15 @@ class Stats {
     // Return the average of the gas limit PER height
     async avgGasLimit(...method) {
         return (await this.transactions(...method)).reduce((acc,tup) => acc + tup[0].Message.GasLimit,0)
+    }
+
+    async avgGasFeeCap(...method) {
+        var avg = 0
+        for (var height in this.tipsets) { 
+            const msgs = await this.fetcher.parentAndReceiptsMessages(this.tipsets[height][0],...method)
+            avg += msgs.reduce((total,v) => total + parseInt(v[0].Message.GasFeeCap), 0) / msgs.length
+        }
+        return avg / Object.keys(this.tipsets).length
     }
 
 
@@ -374,6 +457,25 @@ class Stats {
         return datas
     }
 
+    sortedHeights() {
+        return Object.keys(this.tipsets).sort((a,b) => b - a)
+    }
+
+    async minerInfo(miner) {
+        const allHeights = this.sortedHeights()
+        const tipset = this.tipsets[allHeights[0]]
+        const mif = await this.fetcher.getMinerPower(tipset.Cids,tipset.Height,miner)
+        const gas = await this.avgGasOfMethod(5)         
+        const nbSectors = sizeToSectors(mif.MinerPower.RawBytePower)
+        const size = sizeToString(mif.MinerPower.RawBytePower)
+        const dailyGas = sectorsToPost(nbSectors) * gas
+        return {
+            raw: mif.MinerPower.RawBytePower,
+            ratio: (mif.MinerPower.RawBytePower / mif.TotalPower.RawBytePower).toFixed(3),
+            size: size,
+            dailyGas: dailyGas,
+        }
+    }
 }
 
 export function objectMap(obj, fn) {
@@ -392,3 +494,34 @@ const chartColors = {
 	grey: 'rgb(201, 203, 207)'
 };
 
+const roundsPerDay = 2 * 60 * 24
+const roundsInDeadline = 2 * 30 
+const deadlines = 48
+const maxSectorsPerPost = 2349
+function wpostToSectors(wpost) { return maxSectorsPerPost * wpost }
+function sectorsToPost(sectors) { return sectors / maxSectorsPerPost }
+function gbToPB(v) { return v/1024/1024 }
+function pbToGB(v) { return v*1024*1024}
+// Returns the estimated growthRate per day assuming this number of prove
+// commits at one height (or an average etc)
+function growthRate(prove) { return gbToPB(prove * 32) * roundsPerDay }
+function roundsInDays(rounds) { return Math.ceil(rounds / 2 / 60 / 24) }
+
+function sizeToString(s) {
+    var biUnits = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"]
+	var unit = 0
+	while (s >= 1024 && unit < biUnits.length-1) {
+		s /= 1024
+		unit++
+	}
+    s = s.toFixed(2)
+	return `${s} ${biUnits[unit]}`
+}
+
+function sizeToSectors(s) {
+    return s/1024/1024/1024/32
+}
+
+function attoToFIL(atto) {
+    return atto * 10**-18
+}
