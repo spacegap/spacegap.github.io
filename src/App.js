@@ -66,7 +66,7 @@ function App () {
       if (mounted) {
         fetchingHead()
       }
-    }, 15000)
+    }, 5000)
 
     return () => {
       mounted = false
