@@ -477,8 +477,8 @@ class Stats {
             raw: mif.MinerPower.RawBytePower,
             ratio: (mif.MinerPower.RawBytePower / mif.TotalPower.RawBytePower).toFixed(3),
             size: size,
-            dailyGas: dailyGas,
-            maxDailyPrice: attoToFIL(maxDailyPrice),
+            dailyGas: dailyGas.toFixed(2),
+            maxDailyPrice: attoToFIL(maxDailyPrice).toFixed(2),
         }
     }
 }
