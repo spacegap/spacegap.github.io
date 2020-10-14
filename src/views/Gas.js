@@ -35,7 +35,8 @@ function MinerInfoCard({nstats}) {
         "Raw Byte Power",
         "Ratio over total raw power",
         "Size",
-        "Daily gas required (wpost)"
+        "Daily gas required (wpost)",
+        "Daily price FIL"
     ]
 
     const [minerAddr, setAddr] = useState('');
@@ -92,6 +93,7 @@ function MinerInfoCard({nstats}) {
                                     <td> {data.ratio} </td>
                                     <td> {data.size} </td>
                                     <td> {data.dailyGas} </td>
+                                    <td> {data.maxDailyPrice} </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -355,7 +357,8 @@ class Stats {
     async avgGasFeeCap(...method) {
         var avg = 0
         for (var height in this.tipsets) { 
-            const msgs = await this.fetcher.parentAndReceiptsMessages(this.tipsets[height][0],...method)
+            const tipset = this.tipsets[height]
+            const msgs = await this.fetcher.parentAndReceiptsMessages(tipset.Cids[0],...method)
             avg += msgs.reduce((total,v) => total + parseInt(v[0].Message.GasFeeCap), 0) / msgs.length
         }
         return avg / Object.keys(this.tipsets).length
@@ -469,11 +472,13 @@ class Stats {
         const nbSectors = sizeToSectors(mif.MinerPower.RawBytePower)
         const size = sizeToString(mif.MinerPower.RawBytePower)
         const dailyGas = sectorsToPost(nbSectors) * gas
+        const maxDailyPrice = dailyGas * (await this.avgGasFeeCap(5))
         return {
             raw: mif.MinerPower.RawBytePower,
             ratio: (mif.MinerPower.RawBytePower / mif.TotalPower.RawBytePower).toFixed(3),
             size: size,
             dailyGas: dailyGas,
+            maxDailyPrice: attoToFIL(maxDailyPrice),
         }
     }
 }
