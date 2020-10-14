@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { withRouter } from 'react-router-dom'
 import Chart from 'chart.js';
-import $ from 'jquery';
 
 // number of consecutive block we take the average from 
 const averageLength = 3
@@ -23,53 +22,26 @@ function Gas({client,head}) {
     return (
         <div className="row">
             <div className="accordion col-12" id="accordionExample">
-                    <div className="card">
-                    <div className="card-header" id="biggestGas">
-                      <h2>
-                        <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseBiggest" aria-expanded="true" aria-controls="collapseBiggest">
-                            Biggest gas users
-                        </button>
-                      </h2>
-                    </div>
-                    <div id="collapseBiggest" className="collapse" aria-labelledby="biggestGas" data-parent="#accordionExample">
-                        <div className="card-body">
-                            <BiggestGasSpender nstats={stats} head={head} />
-                        </div>
-                    </div>
-                </div>
-                <div className="card">
-                    <div className="card-header" id="headingOne">
-                      <h2>
-                        <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                            Gas usage table
-                        </button>
-                      </h2>
-                    </div>
-                    <div id="collapseOne" className="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
-                        <div className="card-body">
-                            <GasTable nstats={stats} head={head} />
-                        </div>
-                    </div>
-                </div>
+                <BiggestGasSpenderCard nstats={stats} head={head} />
+                <GasTableCard nstats={stats} head={head} />
             </div>
         </div>
     )
 }
 
-function BiggestGasSpender({head,nstats}) {
+function BiggestGasSpenderCard({head,nstats}) {
     const [dataset,setData] = useState({})
     const [opts,setOpts] = useState({})
     const [pie,setPie] = useState(undefined)
     const maxUser = 10
-    const id = "pieBiggestGas"
+    const canvasRef = useRef(null)
+    const cardRef = useRef(null)
 
     const setCollapseEvent = pie => {
-        // XXX This is bad because it requires names of ID to be constant but 
-        // it'll do for now
-        $("#collapseBiggest").on('show.bs.collapse', function () {
+        cardRef.current.addEventListener('show.bs.collapse', function () {
             pie.update();
         });
-        $("#collapseBiggest").on('hide.bs.collapse', function () {
+        cardRef.current.addEventListener('hide.bs.collapse', function () {
             pie.update();
         });
     }
@@ -103,35 +75,48 @@ function BiggestGasSpender({head,nstats}) {
         setOpts(newOpts)
         setData(newDataset)
 
-        if (pie == undefined) {
-            var ctx = document.getElementById(id).getContext('2d');
+        var myPie = pie
+        if (myPie == undefined) {
+            const ctx = canvasRef.current.getContext('2d');
             const newPie = new Chart(ctx, {
                 type: 'doughnut',
                 data: newDataset,
                 options: newOpts, 
             });
-            setPie(newPie)
-            setCollapseEvent(newPie)
+            myPie = newPie
+            setCollapseEvent(myPie)
         } else {
             pie.data.datasets[0].data = rawData
             pie.options = newOpts
             pie.update()
-            setCollapseEvent(pie)
-            setPie(pie)
         }
+        setPie(myPie)
     }
 
     useEffect(() => { fillDataset() },[head,nstats])
     
     return (
-        <div className="col-12">
-            { pie == undefined && <p> Loading.... </p> }
-            <canvas id={id}>Loading...</canvas>
+    <div className="card">
+        <div className="card-header" id="biggestGas">
+            <h2>
+            <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseBiggest" aria-expanded="true" aria-controls="collapseBiggest">
+                Biggest gas users
+            </button>
+            </h2>
         </div>
+        <div id="collapseBiggest" ref={cardRef} className="collapse" aria-labelledby="biggestGas" data-parent="#accordionExample">
+            <div className="card-body">
+                <div className="col-12">
+                    { pie == undefined && <p> Loading.... </p> }
+                    <canvas ref={canvasRef}>Loading...</canvas>
+                </div>
+            </div>
+        </div>
+    </div>
     )
 }
 
-function GasTable({nstats,head}) {
+function GasTableCard({nstats,head}) {
     const headers = ["", "Average Count", "Average GasUsed ", 
                     "Ratio over total GasUsed", 
                     "Average GasLimit",
@@ -183,44 +168,58 @@ function GasTable({nstats,head}) {
     const drawHeaders = (v) => v.map((h) => (<th key={h}> {h} </th>));
 
     return (
-        <div className="row">
-            <p> This table shows different statistics about the gas usage per epoch. All results are averaged
-                accross the last {averageLength} epochs. You can find a complete description of each column 
-                below the table.
-            </p>
-            <div className="row">
-                <div className="col-12">
-                    <table className="table table-hover">
-                        <thead>
-                            <tr>
-                                { drawHeaders(avgGas.headers) }
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <GasRow name="Total gas used:" values={avgGas.total} />
-                            <GasRow name="WindowPoSt:" values={avgGas.wpost} />
-                            <GasRow name="PreCommit:" values={avgGas.pre} />
-                            <GasRow name="ProveCommit:" values={avgGas.prove} />
-                        </tbody>
-                    </table>
-                </div>
+        <div className="card">
+            <div className="card-header" id="headingOne">
+                <h2>
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                    Gas usage table
+                </button>
+                </h2>
             </div>
-            <div className="row">
-                <div className="col-0"> </div>
-                <div className="col-11"> 
-                    <ul className="list-group list-group-flush">
-                        <li className="list-group-item"><b>Average Count:</b> number of transaction per epoch in average of the method </li>
-                        <li className= "list-group-item"><b>Average GasUsed:</b> gas used per transaction of the method</li>
-                        <li className="list-group-item"><b>Ratio over total GasUsed:</b> Precedent number divided by the total gas used accross all epochs</li>
-                        <li className="list-group-item"><b>Average GasLimit:</b> gas limit set per transaction of the method</li>
-                        <li className="list-group-item"><b>Ratio over total GasLimit:</b> Precedent number divided by the total gas used accross all epochs</li>
-                        <li className="list-group-item"><b>Ratio GasUsed over GasLimit:</b> Total gas used for the method over total gas limit set accross all epoch</li>
-                        <li className="list-group-item"><b>Total GasUsed over BlockLimit:</b> Total gas used divided by total gas limit set per epoch</li>
-                        <li className="list-group-item"><b>Total GasLimit over BlockLimit:</b> precedent number divided by total gas limit set per epoch</li>
-                    </ul> 
+            <div id="collapseOne" className="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
+                <div className="card-body">
+                    <div className="row">
+                        <p> This table shows different statistics about the gas
+        usage per epoch. All results are averaged accross the last
+        {averageLength} epochs. You can find a complete description of each
+        column below the table.  </p>
+                        <div className="row">
+                            <div className="col-12">
+                                <table className="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            { drawHeaders(avgGas.headers) }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <GasRow name="Total gas used:" values={avgGas.total} />
+                                        <GasRow name="WindowPoSt:" values={avgGas.wpost} />
+                                        <GasRow name="PreCommit:" values={avgGas.pre} />
+                                        <GasRow name="ProveCommit:" values={avgGas.prove} />
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div className="row">
+                            <div className="col-0"> </div>
+                            <div className="col-11"> 
+                                <ul className="list-group list-group-flush">
+                                    <li className="list-group-item"><b>Average Count:</b> number of transaction per epoch in average of the method </li>
+                                    <li className= "list-group-item"><b>Average GasUsed:</b> gas used per transaction of the method</li>
+                                    <li className="list-group-item"><b>Ratio over total GasUsed:</b> Precedent number divided by the total gas used accross all epochs</li>
+                                    <li className="list-group-item"><b>Average GasLimit:</b> gas limit set per transaction of the method</li>
+                                    <li className="list-group-item"><b>Ratio over total GasLimit:</b> Precedent number divided by the total gas used accross all epochs</li>
+                                    <li className="list-group-item"><b>Ratio GasUsed over GasLimit:</b> Total gas used for the method over total gas limit set accross all epoch</li>
+                                    <li className="list-group-item"><b>Total GasUsed over BlockLimit:</b> Total gas used divided by total gas limit set per epoch</li>
+                                    <li className="list-group-item"><b>Total GasLimit over BlockLimit:</b> precedent number divided by total gas limit set per epoch</li>
+                                </ul> 
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
     )
 
 }
