@@ -109,10 +109,10 @@ export default function Home ({ miners, client, actors, head }) {
           state and may be incorrect, do your own research.
         </div>
       )}
-    <div className="row">
+      <div className='section'>
+        <h3>Gas</h3>
         See <Link to='/gas'> here </Link> for a detailed gas analysis.
       </div>
-
     </section>
   )
 }
