@@ -2,7 +2,6 @@ import { LotusRPC } from '@filecoin-shipyard/lotus-client-rpc'
 import { BrowserProvider } from '@filecoin-shipyard/lotus-client-provider-browser'
 import Fil from 'js-hamt-filecoin'
 import Economics from './economics'
-import Stats from './stats'
 import { partition } from 'd3'
 import asyncPool from 'tiny-async-pool'
 const d3 = require('d3')
@@ -408,51 +407,52 @@ export default class Filecoin {
     return { sectorsCount, Sectors }
   }
 
-  async parentMessages (cid) {
-    if (cid['/'] in this.parents) {
-      return this.parents[cid['/']]
-    }
-    const msgs = await this.client.chainGetParentMessages(cid)
-    this.parents[cid['/']] = msgs
-    return msgs
-  }
-
-  async receiptParentMessages (cid) {
-    if (cid['/'] in this.receipts) {
-      return this.receipts[cid['/']]
-    }
-    const r = await this.client.chainGetParentReceipts(cid)
-    this.receipts[cid['/']] = r
-    return r
-  }
-
-  async parentAndReceiptsMessages (cid, ...methods) {
-    const msgs = await this.parentMessages(cid)
-    const receipts = await this.receiptParentMessages(cid)
-    if (msgs.length != receipts.length) {
-      throw new Error('invalid length')
-    }
-    return zip(msgs, receipts).filter(entry => {
-      const [tx, r] = entry
-      const exit = r.ExitCode == 0
-      var inMethod = true
-      if (methods.length > 0) {
-        inMethod = methods.includes(tx.Message.Method)
+  async parentMessages(cid) {
+      if (cid["/"] in this.parents) {
+          return this.parents[cid["/"]]
       }
-      return exit && inMethod
-    })
+      const msgs = await this.client.chainGetParentMessages(cid)
+      this.parents[cid["/"]] = msgs
+      return msgs
+  }
+ 
+
+  async receiptParentMessages(cid) {
+      if (cid["/"] in this.receipts) {
+          return this.receipts[cid["/"]]
+      }
+      const r = await this.client.chainGetParentReceipts(cid)
+      this.receipts[cid["/"]] = r
+      return r
   }
 
-  async getMinerPower (tipset, height, miner) {
-    if (tipset['/'] in this.minfo) {
-      return this.minfo[tipset['/']]
+  async parentAndReceiptsMessages(cid, ...methods) {
+      const msgs = await this.parentMessages(cid)
+      const receipts = await this.receiptParentMessages(cid)
+      if (msgs.length != receipts.length) {
+          throw new Error("invalid length")
+      }
+      return zip(msgs,receipts).filter(entry =>  {
+          const [tx,r] = entry
+          const exit =  r.ExitCode == 0
+          var inMethod = true
+          if (methods.length > 0) {
+              inMethod =  methods.includes(tx.Message.Method)
+          }
+          return exit && inMethod
+      })
+  }
+
+  async getMinerPower(tipset,height,miner) {
+    if (tipset["/"] in this.minfo) {
+        return this.minfo[tipset["/"]]
     }
     //let m = await this.client.minerGetBaseInfo(miner,height,tipset)
-    let m = await this.client.stateMinerPower(miner, tipset)
-    this.minfo[tipset['/']] = m
+    let m = await this.client.stateMinerPower(miner,tipset)
+    this.minfo[tipset["/"]] = m
     return m
   }
-
+  
   async fetchGenesisActors (head) {
     const [Supply, Reward, Power] = await Promise.all([
       this.client.StateCirculatingSupply(head.Cids),
@@ -497,5 +497,5 @@ export default class Filecoin {
 }
 
 const zip = (arr, ...arrs) => {
-  return arr.map((val, i) => arrs.reduce((a, arr) => [...a, arr[i]], [val]))
+  return arr.map((val, i) => arrs.reduce((a, arr) => [...a, arr[i]], [val]));
 }
