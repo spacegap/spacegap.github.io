@@ -25,27 +25,42 @@ function MinerInfo ({ client, miners, head }) {
     const fetchInfo = () => {
       setMiner({ ...miner })
 
-      client.fetchDeadlines(minerId, head).then(deadlines => {
-        if (mounted) {
-          miner.deadlines = deadlines
-          setMiner({ ...miner })
-          console.log('deadlines setting')
-        }
-      })
+      client
+        .fetchDeadlines(minerId, head)
+        .then(deadlines => {
+          if (mounted) {
+            miner.deadlines = deadlines
+            setMiner({ ...miner })
+            console.log('deadlines setting')
+          }
+        })
+        .catch(e => {
+          console.error('failed to fetch deadlines')
+        })
 
-      client.fetchDeposits(minerId, head).then(deposits => {
-        if (mounted) {
-          miner.deposits = deposits
-          setMiner({ ...miner })
-        }
-      })
+      client
+        .fetchDeposits(minerId, head)
+        .then(deposits => {
+          if (mounted) {
+            miner.deposits = deposits
+            setMiner({ ...miner })
+          }
+        })
+        .catch(e => {
+          console.error('failed to fetch deposits')
+        })
 
-      client.fetchPreCommittedSectors(minerId, head).then(preCommits => {
-        if (mounted) {
-          miner.preCommits = preCommits
-          setMiner({ ...miner })
-        }
-      })
+      client
+        .fetchPreCommittedSectors(minerId, head)
+        .then(preCommits => {
+          if (mounted) {
+            miner.preCommits = preCommits
+            setMiner({ ...miner })
+          }
+        })
+        .catch(e => {
+          console.error('failed to fetch precommitted sectors', e)
+        })
     }
 
     fetchInfo()

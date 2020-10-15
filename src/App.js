@@ -32,13 +32,13 @@ function App () {
     reload()
   }, [node])
 
-  /*useEffect(() => {*/
-    //if (!head) return
+  // useEffect(() => {
+  //   if (!head) return
 
-    //client.fetchPower(head).then(power => {
-      //setSpa(power)
-    //})
-  //}, [head, client])
+  //   client.fetchPower(head).then(power => {
+  //     setSpa(power)
+  //   })
+  // }, [head, client])
 
   useEffect(() => {
     let mounted = true

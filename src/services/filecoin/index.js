@@ -30,24 +30,53 @@ function b64ToBn (b64) {
   return window.BigInt('0x' + hex.join(''))
 }
 
-const partitionSchema = {
-  Sectors: 'buffer',
-  Faults: 'buffer',
-  Recoveries: 'buffer',
-  Terminated: 'buffer',
-  ExpirationEpochs: 'cid',
-  EarlyTerminated: 'cid',
-  LivePower: {
-    a: 'bigint',
-    b: 'bigint'
-  },
-  FaultyPower: {
-    a: 'bigint',
-    b: 'bigint'
-  },
-  RecoveringPower: {
-    a: 'bigint',
-    b: 'bigint'
+const partitionSchema = height => {
+  if (height >= 138720) {
+    return {
+      Sectors: 'buffer',
+      Unproven: 'buffer',
+      Faults: 'buffer',
+      Recoveries: 'buffer',
+      Terminated: 'buffer',
+      ExpirationEpochs: 'cid',
+      EarlyTerminated: 'cid',
+      LivePower: {
+        a: 'bigint',
+        b: 'bigint'
+      },
+      UnprovenPower: {
+        a: 'bigint',
+        b: 'bigint'
+      },
+      FaultyPower: {
+        a: 'bigint',
+        b: 'bigint'
+      },
+      RecoveringPower: {
+        a: 'bigint',
+        b: 'bigint'
+      }
+    }
+  }
+  return {
+    Sectors: 'buffer',
+    Faults: 'buffer',
+    Recoveries: 'buffer',
+    Terminated: 'buffer',
+    ExpirationEpochs: 'cid',
+    EarlyTerminated: 'cid',
+    LivePower: {
+      a: 'bigint',
+      b: 'bigint'
+    },
+    FaultyPower: {
+      a: 'bigint',
+      b: 'bigint'
+    },
+    RecoveringPower: {
+      a: 'bigint',
+      b: 'bigint'
+    }
   }
 }
 
@@ -172,7 +201,9 @@ export default class Filecoin {
 
   async getData (head, path, schema) {
     const state = head.Blocks[0].ParentStateRoot['/']
-    const data = (await this.client.chainGetNode(`${state}/${path}`)).Obj
+    const node =
+      head.Height >= 138720 ? `${state}/1/${path}` : `${state}/${path}`
+    const data = (await this.client.chainGetNode(node)).Obj
 
     const self = this
     return await Fil.methods.decode(schema, data).asObject(async a => {
@@ -221,9 +252,9 @@ export default class Filecoin {
 
   async fetchPower (head) {
     const state = head.Blocks[0].ParentStateRoot['/']
-    const storagePowerActorRaw = (
-      await this.client.chainGetNode(`${state}/@Ha:t04/1`)
-    ).Obj
+    const node =
+      head.Height >= 138720 ? `${state}/1/@Ha:t04/1` : `${state}/@Ha:t04/1`
+    const storagePowerActorRaw = (await this.client.chainGetNode(node)).Obj
     return {
       TotalRawBytePower: bytesToBig(b64.decode(storagePowerActorRaw[0])),
       TotalBytesCommitted: bytesToBig(b64.decode(storagePowerActorRaw[1])),
@@ -273,9 +304,12 @@ export default class Filecoin {
 
   async fetchDeadlinesProxy (miner, head) {
     const state = head.Blocks[0].ParentStateRoot['/']
-    const deadlinesCids = (
-      await this.client.chainGetNode(`${state}/@Ha:${miner}/1/11`)
-    ).Obj[0]
+    const node =
+      head.Height >= 138720
+        ? `${state}/1/@Ha:${miner}/1/12`
+        : `${state}/@Ha:${miner}/1/11`
+    const deadlinesCids = (await this.client.chainGetNode(node)).Obj[0]
+
     const deadlines = await asyncPool(24, deadlinesCids, async minerCid => {
       const deadline = (await this.client.ChainGetNode(`${minerCid['/']}`)).Obj
       return {
@@ -289,12 +323,11 @@ export default class Filecoin {
   }
 
   async fetchDeadlines (hash, head) {
-    console.log('to fetch', hash, head)
     const [deadline, deadlines] = await Promise.all([
       this.client.StateMinerProvingDeadline(hash, head.Cids),
       this.fetchDeadlinesProxy(hash, head)
     ])
-    console.log('fetched', hash, head)
+    console.log('>>> got deadline and deadline')
 
     const nextDeadlines = [...Array(48)].map((_, i) => ({
       ...deadlines[(deadline.Index + i) % 48],
@@ -327,11 +360,8 @@ export default class Filecoin {
   }
 
   async fetchPreCommittedSectors (hash, head) {
-    const preCommittedSectors = await this.getData(
-      head,
-      `@Ha:${hash}/1/5`,
-      preCommitSchema
-    )
+    const node = head.Height >= 138720 ? `@Ha:${hash}/1/6` : `@Ha:${hash}/1/5`
+    const preCommittedSectors = await this.getData(head, node, preCommitSchema)
     const PreCommitDeadlines = d3
       .groups(
         Object.keys(preCommittedSectors).map(d => ({

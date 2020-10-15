@@ -74,7 +74,6 @@ function Deadline ({ miners, client, head }) {
           }
         } catch (e) {
           console.log('could not find', day, height)
-          console.log(e)
         }
       })
     } catch (e) {
