@@ -79,8 +79,9 @@ function App () {
     <Router>
       <div className='App'>
         <div className='container'>
-          <div className='row'>
+          {/* <div className='row'>
             <div className='col'>
+              Connected to Filecoin Network via&nbsp;
               <select onChange={e => setNode(e.target.value)} value={node}>
                 <option value='wss://lotus.jimpick.com/spacerace_api/0/node/rpc/v0'>
                   Jim's node 0
@@ -96,7 +97,7 @@ function App () {
                 </option>
               </select>
             </div>
-          </div>
+          </div> */}
           <TinySummary client={client} head={head} />
         </div>
         <header className='container-fluid'>
@@ -120,11 +121,11 @@ function App () {
             <Route path='/status'>
               <Status head={head} spa={spa} client={client} miners={miners} />
             </Route>
-           <Route path='/gas' >
+            <Route path='/gas'>
               <Gas client={client} head={head} />
             </Route>
             <Route path='/'>
-              <Home miners={miners} />
+              <Home client={client} head={head} miners={miners} />
             </Route>
           </Switch>
         </div>

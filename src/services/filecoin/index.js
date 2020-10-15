@@ -1,6 +1,7 @@
 import { LotusRPC } from '@filecoin-shipyard/lotus-client-rpc'
 import { BrowserProvider } from '@filecoin-shipyard/lotus-client-provider-browser'
 import Fil from 'js-hamt-filecoin'
+import Economics from './economics'
 import { partition } from 'd3'
 import asyncPool from 'tiny-async-pool'
 const d3 = require('d3')
@@ -31,7 +32,8 @@ function b64ToBn (b64) {
 }
 
 const partitionSchema = height => {
-  if (height >= 138720) {
+  console.log('>>>> HEIGHT', height)
+  if (!height || height >= 138720) {
     return {
       Sectors: 'buffer',
       Unproven: 'buffer',
@@ -216,10 +218,13 @@ export default class Filecoin {
     return this.client.chainHead()
   }
 
-  async fetchPartitionsSectors (cid) {
+  async fetchPartitionsSectors (cid, height) {
     const node = (await this.client.chainGetNode(`${cid['/']}`)).Obj[2][2]
     return node.map(partitionRaw => {
-      const partitionObj = Fil.methods.decode(partitionSchema, partitionRaw)
+      const partitionObj = Fil.methods.decode(
+        partitionSchema(height),
+        partitionRaw
+      )
       return [
         {
           Sectors: decodeRLE2(partitionObj.Sectors),
@@ -269,16 +274,17 @@ export default class Filecoin {
 
   async fetchDeposits (hash, head) {
     const state = await this.client.StateReadState(hash, head.Cids)
-    const precommitdeposits = state.State.PreCommitDeposits
-    const locked = state.State.LockedFunds
-    const collateral = state.Balance
-    const available = collateral - precommitdeposits - locked
+    const { State, Balance } = state
+    const { PreCommitDeposits, LockedFunds, InitialPledge, FeeDebt } = State
+    const Available = Balance - InitialPledge - PreCommitDeposits - LockedFunds
 
     return {
-      collateral: f(state.Balance / 1000000000000000000),
-      available: f(available / 1000000000000000000),
-      locked: f(locked / 1000000000000000000),
-      precommitdeposits: f(precommitdeposits / 1000000000000000000)
+      Balance: f(Balance / 1000000000000000000),
+      InitialPledge: f(InitialPledge / 1000000000000000000),
+      Available: f(Available / 1000000000000000000),
+      LockedFunds: f(LockedFunds / 1000000000000000000),
+      PreCommitDeposits: f(PreCommitDeposits / 1000000000000000000),
+      FeeDebt: f(FeeDebt / 1000000000000000000)
     }
   }
 
@@ -320,6 +326,10 @@ export default class Filecoin {
       }
     })
     return deadlines
+  }
+
+  async fetchMinerInfo (hash, head) {
+    return this.client.StateMinerInfo(hash, head.Cids)
   }
 
   async fetchDeadlines (hash, head) {
@@ -441,6 +451,48 @@ export default class Filecoin {
     let m = await this.client.stateMinerPower(miner,tipset)
     this.minfo[tipset["/"]] = m
     return m
+  }
+  
+  async fetchGenesisActors (head) {
+    const [Supply, Reward, Power] = await Promise.all([
+      this.client.StateCirculatingSupply(head.Cids),
+      this.client.StateReadState('f02', head.Cids),
+      this.client.StateReadState('f04', head.Cids)
+    ])
+
+    return { Supply, Reward, Power }
+  }
+
+  computeEconomics (
+    head,
+    { Supply, Reward, Power },
+    {
+      projectedDays,
+      perDurationNwRbGrowth = 10 * 2 ** 50,
+      perDurationMinerQaGrowth = 2 ** 51
+    }
+  ) {
+    const inputs = {
+      currEpoch: +head.Height,
+      nwqap: +Power.State.ThisEpochQualityAdjPower,
+      nwqapP: +Power.State.ThisEpochQAPowerSmoothed.PositionEstimate / 2 ** 128,
+      nwqapV: +Power.State.ThisEpochQAPowerSmoothed.VelocityEstimate / 2 ** 128,
+      nwCircSupply: +Supply.FilCirculating / 1e18,
+      perEpochRewardP:
+        +Reward.State.ThisEpochRewardSmoothed.PositionEstimate /
+        (2 ** 128 * 1e18),
+      perEpochRewardV:
+        +Reward.State.ThisEpochRewardSmoothed.VelocityEstimate /
+        (2 ** 128 * 1e18),
+      nwCumsumRealized: +Reward.State.CumsumRealized,
+      perDurationNwRbGrowth,
+      projectedDays,
+      perDurationMinerQaGrowth
+    }
+
+    const econ = new Economics(inputs)
+
+    return econ.summary()
   }
 }
 
