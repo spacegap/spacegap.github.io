@@ -4,6 +4,7 @@ import Summary from '../components/Summary'
 
 const d3 = require('d3')
 const f = d3.format(',')
+const f0 = d3.format(',.0f')
 const f3 = d3.format(',.3f')
 
 export default function Home ({ miners, client, actors, head }) {
@@ -12,6 +13,10 @@ export default function Home ({ miners, client, actors, head }) {
     client.computeEconomics(head, actors, {
       projectedDays: 1
     })
+
+  const WindowPoStGasAvg = 534297287
+  const PreCommitGasAvg = 21701073
+  const ProveCommitGasAvg = 47835932
 
   return (
     <section id='home' className='container'>
@@ -33,34 +38,75 @@ export default function Home ({ miners, client, actors, head }) {
           individual miners or the <Link to='/status'>network status</Link>.
         </div>
       </div>
+      {actors && (
+        <div id='actors' className='section'>
+          <h3>Tokens</h3>
+          <div className='grid'>
+            <Summary
+              title={`${f0(+actors.Supply.FilCirculating / 1e18 || 0)} FIL`}
+              desc='Circulating Supply'
+            />
+            <Summary
+              title={`${f0(+actors.Supply.FilBurnt / 1e18 || 0)} FIL`}
+              desc='Burnt'
+            />
+            <Summary
+              desc='Locked'
+              title={`${f0(+actors.Supply.FilLocked / 1e18 || 0)} FIL`}
+            />
+          </div>
+        </div>
+      )}
+      {actors && (
+        <div id='actors2' className='section'>
+          <h3>Power</h3>
+          <div className='grid'>
+            <Summary
+              title={`${f0(
+                +actors.Power.State.TotalBytesCommitted / 2 ** 50 || 0
+              )} PiB`}
+              desc='Network Raw'
+            />
+            <Summary
+              title={`${f3(
+                +actors.Reward.State.ThisEpochReward / 5 / 1e18 || 0
+              )} FIL`}
+              desc='Block Reward'
+            />
+            <Summary
+              desc='Active Miners'
+              title={`${f0(+actors.Power.State.MinerAboveMinPowerCount || 0)}`}
+            />
+          </div>
+        </div>
+      )}
       {econSummary && (
-        <div id='deposits' className='section'>
+        <div id='economics' className='section'>
           <h3>Economics</h3>
           <div className='grid'>
             {econSummary && (
               <Summary
                 title={`${f3(econSummary.sectorIp || 0)} FIL`}
-                desc='Pledge'
+                desc='Sector Pledge'
               />
             )}
 
             {econSummary && (
               <Summary
                 title={`${f3(econSummary.sectorProjectedReward || 0)} FIL`}
-                desc='180 Days Reward'
+                desc='Sector 180-Days Reward'
               />
             )}
 
             {econSummary && (
               <Summary
-                desc='Fault Fee'
+                desc='Sector Fault Fee'
                 title={`${f3(econSummary.sectorFaultFee || 0)} FIL`}
               />
             )}
           </div>
           These numbers are approximate projections based on the current network
-          state and may be incorrect, do your own research. All costs are per
-          sector.
+          state and may be incorrect, do your own research.
         </div>
       )}
     </section>
