@@ -1,9 +1,16 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
-export default function MinerBar ({ client, miners, minerId, deadlineId }) {
+export default function MinerBar ({
+  client,
+  miners,
+  minerId,
+  deadlineId,
+  miner
+}) {
   return (
     <div className='section minerbar'>
+      {/* <div>{miner && miner.info && JSON.stringify(miner.info)}</div> */}
       <div className='minerId'>
         {!deadlineId && (
           <>
@@ -11,6 +18,9 @@ export default function MinerBar ({ client, miners, minerId, deadlineId }) {
             <span className='tinyarrow'>
               <a href={`https://filfox.info/en/address/${minerId}`}>↗</a>
             </span>
+            {miner && miner.deposits && +miner.deposits.FeeDebt !== 0 && (
+              <span className='rekt'>DEBT</span>
+            )}
           </>
         )}
         {deadlineId && (

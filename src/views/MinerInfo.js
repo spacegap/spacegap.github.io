@@ -26,6 +26,18 @@ function MinerInfo ({ client, miners, head }) {
       setMiner({ ...miner })
 
       client
+        .fetchMinerInfo(minerId, head)
+        .then(info => {
+          if (mounted) {
+            miner.info = info
+            setMiner({ ...miner })
+          }
+        })
+        .catch(e => {
+          console.error('failed to fetch miner info')
+        })
+
+      client
         .fetchDeadlines(minerId, head)
         .then(deadlines => {
           if (mounted) {
@@ -76,27 +88,52 @@ function MinerInfo ({ client, miners, head }) {
 
   return (
     <section className='container'>
-      <MinerBar client={client} miners={miners} minerId={minerId} />
+      <MinerBar
+        client={client}
+        miners={miners}
+        minerId={minerId}
+        miner={miner}
+      />
       <div id='deposits' className='section'>
         <div className='grid'>
           {miner.deposits && (
             <Summary
-              title={`${f(miner.deposits.collateral || 0)} FIL`}
-              desc='Collateral'
+              title={`${f(miner.deposits.Balance || 0)} FIL`}
+              desc='Balance'
             />
           )}
 
           {miner.deposits && (
             <Summary
-              title={`${f(miner.deposits.available || 0)} FIL`}
+              title={`${f(miner.deposits.Available || 0)} FIL`}
               desc='Available'
             />
           )}
 
           {miner.deposits && (
             <Summary
-              desc='Locked'
-              title={`${f(miner.deposits.locked || 0)} FIL`}
+              desc='Vesting'
+              title={`${f(miner.deposits.LockedFunds || 0)} FIL`}
+            />
+          )}
+        </div>
+        <div className='grid'>
+          {miner.deposits && (
+            <Summary
+              title={`${f(miner.deposits.InitialPledge || 0)} FIL`}
+              desc='Initial Pledge'
+            />
+          )}
+          {miner.deposits && (
+            <Summary
+              desc='PreCommit Deposit'
+              title={`${f(miner.deposits.PreCommitDeposits || 0)} FIL`}
+            />
+          )}
+          {miner.deposits && (
+            <Summary
+              title={`${f(miner.deposits.FeeDebt || 0)} FIL`}
+              desc='Fee Debt'
             />
           )}
         </div>
