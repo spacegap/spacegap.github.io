@@ -48,55 +48,65 @@ export default function TinySummary ({ client, head }) {
   }, [client, head, round])
 
   return (
-    <div className='tiny-grid'>
-      {head && expected && (
-        <div>
-          Filecoin Status{' '}
-          <span>
-            {head.Height < expected
-              ? expected - head.Height === 1
-                ? 'gathering blocks'
-                : 'catching up'
-              : 'ok'}
-          </span>
-        </div>
-      )}
-      {head && (
-        <div className='tiny'>
-          Current Tipset{' '}
-          <a href={`https://filfox.info/en/tipset/${head.Height}`}>
-            {f(head.Height)}
-          </a>
-        </div>
-      )}
-      {expected && (
-        <div className='tiny'>
-          Expected Tipset{' '}
-          <a href={`https://filfox.info/en/tipset/${expected}`}>
-            {f(expected)}
-          </a>
-        </div>
-      )}
-      {round && (
-        <>
-          <div className='tiny'>
-            Drand Status{' '}
-            <span>{round.current < round.expected ? 'catching up' : 'ok'}</span>
+    <>
+      <div class='countdown'>
+        {expected && expected <= 148888 && (
+          <div>{148888 - expected} blocks to mainnet</div>
+        )}
+        {expected && expected > 148888 && <div>We are LIVE!</div>}
+      </div>
+      <div className='tiny-grid'>
+        {head && expected && (
+          <div>
+            Filecoin Status{' '}
+            <span>
+              {head.Height < expected
+                ? expected - head.Height === 1
+                  ? 'gathering blocks'
+                  : 'catching up'
+                : 'ok'}
+            </span>
           </div>
+        )}
+        {head && (
           <div className='tiny'>
-            Current Drand{' '}
-            <a href={`https://api.drand.sh/public/${round.current}`}>
-              {f(round.current)}
+            Current Tipset{' '}
+            <a href={`https://filfox.info/en/tipset/${head.Height}`}>
+              {f(head.Height)}
             </a>
           </div>
+        )}
+        {expected && (
           <div className='tiny'>
-            Expected Drand{' '}
-            <a href={`https://api.drand.sh/public/${round.expected}`}>
-              {f(round.expected)}
+            Expected Tipset{' '}
+            <a href={`https://filfox.info/en/tipset/${expected}`}>
+              {f(expected)}
             </a>
           </div>
-        </>
-      )}
-    </div>
+        )}
+        {round && (
+          <>
+            <div className='tiny'>
+              Drand Status{' '}
+              <span>
+                {round.current < round.expected ? 'catching up' : 'ok'}
+              </span>
+            </div>
+            <div className='tiny'>
+              Current Drand{' '}
+              <a href={`https://api.drand.sh/public/${round.current}`}>
+                {f(round.current)}
+              </a>
+            </div>
+            <div className='tiny'>
+              Expected Drand{' '}
+              <a href={`https://api.drand.sh/public/${round.expected}`}>
+                {f(round.expected)}
+              </a>
+            </div>
+          </>
+        )}
+      </div>
+    </>
   )
 }
