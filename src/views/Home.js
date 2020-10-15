@@ -6,21 +6,12 @@ const d3 = require('d3')
 const f = d3.format(',')
 const f3 = d3.format(',.3f')
 
-export default function Home ({ miners, client, head }) {
-  const [econSummary, setEconSummary] = useState()
-
-  useEffect(() => {
-    if (!head) return
-    const fetchingEcon = async () => {
-      const actors = await client.fetchGenesisActors(head)
-      const summary = client.computeEconomics(head, actors, {
-        projectedDays: 1
-      })
-      console.log('summary', summary)
-      setEconSummary(summary)
-    }
-    fetchingEcon()
-  }, [client, head])
+export default function Home ({ miners, client, actors, head }) {
+  const econSummary =
+    actors &&
+    client.computeEconomics(head, actors, {
+      projectedDays: 1
+    })
 
   return (
     <section id='home' className='container'>

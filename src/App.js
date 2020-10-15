@@ -20,6 +20,7 @@ function App () {
   const [node, setNode] = useState('wss://node.glif.io/space07/lotus/rpc/v0')
   const [client, setFilClient] = useState(new Filecoin(node))
   const [spa, setSpa] = useState()
+  const [actors, setActors] = useState()
 
   useEffect(() => {
     const reload = async () => {
@@ -29,6 +30,16 @@ function App () {
 
     reload()
   }, [node])
+
+  useEffect(() => {
+    if (!head) return
+    const fetchingEcon = async () => {
+      const actors = await client.fetchGenesisActors(head)
+      setActors(actors)
+    }
+
+    fetchingEcon()
+  }, [client, head])
 
   // useEffect(() => {
   //   if (!head) return
@@ -110,7 +121,12 @@ function App () {
             <Deadline client={client} miners={miners} head={head} />
           </Route>
           <Route path='/miners/:minerId'>
-            <MinerInfo client={client} miners={miners} head={head} />
+            <MinerInfo
+              actors={actors}
+              client={client}
+              miners={miners}
+              head={head}
+            />
           </Route>
           <Route path='/full'>
             <Full client={client} miners={miners} />
@@ -119,7 +135,7 @@ function App () {
             <Status head={head} spa={spa} client={client} miners={miners} />
           </Route>
           <Route path='/'>
-            <Home client={client} head={head} miners={miners} />
+            <Home actors={actors} client={client} head={head} miners={miners} />
           </Route>
         </Switch>
       </div>

@@ -10,9 +10,15 @@ const d3 = require('d3')
 const f = d3.format(',')
 const f2 = d3.format(',.0f')
 
-function MinerInfo ({ client, miners, head }) {
+function MinerInfo ({ client, miners, head, actors }) {
   const { minerId } = useParams()
   const [miner, setMiner] = useState({ id: minerId })
+
+  const sectorFaultFee =
+    actors &&
+    client.computeEconomics(head, actors, {
+      projectedDays: 1
+    }).sectorFaultFee
 
   // On new (hash or head): fetch miner
   useEffect(() => {
@@ -117,7 +123,7 @@ function MinerInfo ({ client, miners, head }) {
             />
           )}
         </div>
-        <div className='grid'>
+        <div className='grid grid-4'>
           {miner.deposits && (
             <Summary
               title={`${f(miner.deposits.InitialPledge || 0)} FIL`}
@@ -134,6 +140,15 @@ function MinerInfo ({ client, miners, head }) {
             <Summary
               title={`${f(miner.deposits.FeeDebt || 0)} FIL`}
               desc='Fee Debt'
+            />
+          )}
+          {miner.deposits && sectorFaultFee && (
+            <Summary
+              title={`${f2(
+                (+miner.deposits.Available + +miner.deposits.LockedFunds) /
+                  +sectorFaultFee || 0
+              )}`}
+              desc='Faults to Debt'
             />
           )}
         </div>
