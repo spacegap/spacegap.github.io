@@ -12,7 +12,7 @@ import TinySummary from './components/TinySummary'
 import Gas from './views/Gas'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap/dist/js/bootstrap.bundle.min';
+import 'bootstrap/dist/js/bootstrap.bundle.min'
 import './App.scss'
 
 function App () {
@@ -118,7 +118,7 @@ function App () {
             </h1>
           </Link>
         </header>
-        <div className="container">
+        <div className='container'>
           <Switch>
             <Route path='/miners/:minerId/deadlines/:deadlineId'>
               <Deadline client={client} miners={miners} head={head} />
@@ -138,10 +138,15 @@ function App () {
               <Status head={head} spa={spa} client={client} miners={miners} />
             </Route>
             <Route path='/gas'>
-                <Gas client={client} head={head} />
+              <Gas client={client} head={head} />
             </Route>
             <Route path='/'>
-              <Home actors={actors} client={client} head={head} miners={miners} />
+              <Home
+                actors={actors}
+                client={client}
+                head={head}
+                miners={miners}
+              />
             </Route>
           </Switch>
         </div>

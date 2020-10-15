@@ -477,7 +477,7 @@ export default class Filecoin {
       nwqap: +Power.State.ThisEpochQualityAdjPower,
       nwqapP: +Power.State.ThisEpochQAPowerSmoothed.PositionEstimate / 2 ** 128,
       nwqapV: +Power.State.ThisEpochQAPowerSmoothed.VelocityEstimate / 2 ** 128,
-      nwCircSupply: +Supply.FilCirculating / 1e18,
+      nwCircSupply: +Supply / 1e18,
       perEpochRewardP:
         +Reward.State.ThisEpochRewardSmoothed.PositionEstimate /
         (2 ** 128 * 1e18),

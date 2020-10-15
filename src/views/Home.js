@@ -43,17 +43,17 @@ export default function Home ({ miners, client, actors, head }) {
           <h3>Tokens</h3>
           <div className='grid'>
             <Summary
-              title={`${f0(+actors.Supply.FilCirculating / 1e18 || 0)} FIL`}
+              title={`${f0(+actors.Supply / 1e18 || 0)} FIL`}
               desc='Circulating Supply'
             />
-            <Summary
+            {/* <Summary
               title={`${f0(+actors.Supply.FilBurnt / 1e18 || 0)} FIL`}
               desc='Burnt'
             />
             <Summary
               desc='Locked'
               title={`${f0(+actors.Supply.FilLocked / 1e18 || 0)} FIL`}
-            />
+            /> */}
           </div>
         </div>
       )}
