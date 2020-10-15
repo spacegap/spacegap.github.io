@@ -56,7 +56,7 @@ export default function Home ({ miners, client, head }) {
             {econSummary && (
               <Summary
                 title={`${f3(econSummary.sectorProjectedReward || 0)} FIL`}
-                desc='Daily Reward'
+                desc='180 Days Reward'
               />
             )}
 
