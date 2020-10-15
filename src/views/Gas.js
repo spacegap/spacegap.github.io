@@ -22,12 +22,140 @@ function Gas({client,head}) {
     return (
         <div className="row">
             <div className="accordion col-12" id="accordionExample">
+                <GrowthCard nstats={stats} head={head} />
                 <MinerInfoCard nstats={stats} />
                 <BiggestGasSpenderCard nstats={stats} head={head} />
                 <GasTableCard nstats={stats} head={head} />
             </div>
         </div>
     )
+}
+
+function GrowthCard({nstats,head}) {
+    const [commits,setCommits] = useState({})
+    const [wposts, setWposts] = useState({})
+    const [graph,setGraph] = useState(undefined)
+    const maxRounds = 30
+    const canvasRef = useRef(null)
+    const cardRef = useRef(null)
+
+    const setCollapseEvent = g => {
+        cardRef.current.addEventListener('show.bs.collapse', function() {
+            g.update()
+        });
+        cardRef.current.addEventListener('hide.bs.collapse', function() {
+            g.update()
+        });
+    }
+
+    const options = {
+        title: {
+            display: true,
+            text: 'Growth rate and proven sectors'
+        },
+        scales: {
+            yAxes: [{
+                "id": 'commits',
+                type: 'linear',
+                position: 'left',
+                scaleLabel: {
+                    labelString: "Estimated Growth Rate (PB/day) ",
+                    display: true,
+                },
+            }, {
+                "id": 'wposts',
+                type: 'linear',
+                position: 'right',
+                scaleLabel: {
+                    labelString: "Estimated Sectors Proven per height",
+                    display: true,
+                },
+            }],
+        },
+    }
+
+    const fillDataset = async () => {
+        const allSealed = await nstats.transactionsPerHeight(7) 
+        const allProven = await nstats.transactionsPerHeight(5)
+        // convert those to only the number of transactions per height
+        const sealed = Object.fromEntries(objectMap(allSealed, (v,k) => [k,v.length]))
+        const proven = Object.fromEntries(objectMap(allProven, (v,k) => [k,v.length]))
+        // merge what we have with potentially new stuff - overwrite old data
+        // with new data if same height
+        const newCommits = {...commits,...sealed} 
+        const newWposts = {...wposts,...proven}
+        // sort in decreasing order, take some of it then show it in reverse
+        // order
+        const rounds = objectMap(newCommits, (v,k) => k).sort((a,b) => b - a).slice(0,maxRounds).reverse()
+        // filter only rounds selected and convert to growth rate
+        const filteredCommits = objectFilter(newCommits,(v,k) => rounds.includes(k))
+        setCommits(filteredCommits)
+        const dataCommits = rounds.map(r => filteredCommits[r]).map(c => Math.round(growthRate(c)))
+        // filter only rounds selected and convert to number of sectors
+        const filteredPosts = objectFilter(newWposts,(v,k) => rounds.includes(k))
+        setWposts(filteredPosts)
+        const dataWposts = rounds.map(r => filteredPosts[r]).map(w => Math.round(wpostToSectors(w)))
+        var myGraph = graph
+        if (myGraph == undefined) {
+            const dataset = [
+                {
+                    data: dataCommits,
+                    borderColor: chartColors.blue,
+                    fill: false,
+                    label: "Estimated growth rate in PB per day",
+                    yAxisID: 'commits',
+                }, 
+                {
+                    data: dataWposts,
+                    borderColor: chartColors.red,
+                    fill: false,
+                    label: "Estimated number of proven sectors per height",
+                    yAxisID: 'wposts',
+                }
+            ]
+            const lineData = {
+                datasets: dataset,
+                labels: rounds,
+            }
+            const ctx = canvasRef.current.getContext('2d');
+            const newGraph = new Chart(ctx, {
+                type: 'line',
+                data: lineData,
+                options: options, 
+            });
+            myGraph = newGraph
+            setCollapseEvent(myGraph)
+        } else {
+            myGraph.data.datasets[0].data = dataCommits
+            myGraph.data.datasets[1].data = dataWposts
+            myGraph.data.labels = rounds
+            myGraph.update()
+        }
+        setGraph(myGraph)
+    }
+
+    useEffect(() => { fillDataset() },[head,nstats])
+
+    return (
+    <div className="card">
+        <div className="card-header" id="growth">
+            <h2>
+            <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseGrowth" aria-expanded="true" aria-controls="collapseBiggest">
+                Growth evolution
+            </button>
+            </h2>
+        </div>
+        <div id="collapseGrowth" ref={cardRef} className="collapse" aria-labelledby="growth" data-parent="#accordionExample">
+            <div className="card-body">
+                <div className="col-12">
+                    { graph == undefined && <p> Loading.... </p> }
+                    <canvas ref={canvasRef}>Loading...</canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    )
+
 }
 
 function MinerInfoCard({nstats}) {
@@ -387,6 +515,17 @@ class Stats {
         return allTx
     }
 
+    async transactionsPerHeight(...method) {
+        const allTx = {}
+        for (var height in this.tipsets) {
+            const tipset = this.tipsets[height]
+            const msgs = await this.fetcher.parentAndReceiptsMessages(tipset.Cids[0],...method)
+            allTx[height] = msgs
+        }
+        return allTx
+
+    }
+
     async avgRatioUsedOverTotalUsed(...method) {
         const gasUsedMethod = (await this.transactions(...method)).reduce((acc,v) => acc + v[1].GasUsed,0)
         const totalUsed= (await this.transactions()).reduce((acc,v) => acc + v[1].GasUsed,0)
@@ -483,7 +622,7 @@ class Stats {
     }
 }
 
-export function objectMap(obj, fn) {
+function objectMap(obj, fn) {
     return Object.entries(obj).map(
       ([k, v], i) => fn(v, k, i)
     )
@@ -529,4 +668,8 @@ function sizeToSectors(s) {
 
 function attoToFIL(atto) {
     return atto * 10**-18
+}
+
+function objectFilter(obj, fn) {
+    return Object.fromEntries(Object.entries(obj).filter(([k,v]) => fn(v,k)));
 }
