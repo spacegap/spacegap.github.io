@@ -49,12 +49,6 @@ export default function TinySummary ({ client, head }) {
 
   return (
     <>
-      <div class='countdown'>
-        {expected && expected <= 148888 && (
-          <div>{148888 - expected} blocks to mainnet</div>
-        )}
-        {expected && expected > 148888 && <div>We are LIVE!</div>}
-      </div>
       <div className='tiny-grid'>
         {head && expected && (
           <div>
