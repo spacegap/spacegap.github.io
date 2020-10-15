@@ -196,6 +196,9 @@ export default class Filecoin {
     const provider = new BrowserProvider(endpointUrl)
     console.log('new endpoint', endpointUrl)
     this.client = new LotusRPC(provider, { schema })
+    this.parents = {}
+    this.receipts = {}
+    this.minfo = {}
   }
 
   async getData (head, path, schema) {
@@ -212,7 +215,7 @@ export default class Filecoin {
   }
 
   async fetchHead () {
-    return await this.client.chainHead()
+    return this.client.chainHead()
   }
 
   async fetchPartitionsSectors (cid, height) {
@@ -404,6 +407,52 @@ export default class Filecoin {
     return { sectorsCount, Sectors }
   }
 
+  async parentMessages(cid) {
+      if (cid["/"] in this.parents) {
+          return this.parents[cid["/"]]
+      }
+      const msgs = await this.client.chainGetParentMessages(cid)
+      this.parents[cid["/"]] = msgs
+      return msgs
+  }
+ 
+
+  async receiptParentMessages(cid) {
+      if (cid["/"] in this.receipts) {
+          return this.receipts[cid["/"]]
+      }
+      const r = await this.client.chainGetParentReceipts(cid)
+      this.receipts[cid["/"]] = r
+      return r
+  }
+
+  async parentAndReceiptsMessages(cid, ...methods) {
+      const msgs = await this.parentMessages(cid)
+      const receipts = await this.receiptParentMessages(cid)
+      if (msgs.length != receipts.length) {
+          throw new Error("invalid length")
+      }
+      return zip(msgs,receipts).filter(entry =>  {
+          const [tx,r] = entry
+          const exit =  r.ExitCode == 0
+          var inMethod = true
+          if (methods.length > 0) {
+              inMethod =  methods.includes(tx.Message.Method)
+          }
+          return exit && inMethod
+      })
+  }
+
+  async getMinerPower(tipset,height,miner) {
+    if (tipset["/"] in this.minfo) {
+        return this.minfo[tipset["/"]]
+    }
+    //let m = await this.client.minerGetBaseInfo(miner,height,tipset)
+    let m = await this.client.stateMinerPower(miner,tipset)
+    this.minfo[tipset["/"]] = m
+    return m
+  }
+  
   async fetchGenesisActors (head) {
     const [Supply, Reward, Power] = await Promise.all([
       this.client.StateCirculatingSupply(head.Cids),
@@ -445,4 +494,8 @@ export default class Filecoin {
 
     return econ.summary()
   }
+}
+
+const zip = (arr, ...arrs) => {
+  return arr.map((val, i) => arrs.reduce((a, arr) => [...a, arr[i]], [val]));
 }

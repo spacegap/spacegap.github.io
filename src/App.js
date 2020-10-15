@@ -9,8 +9,10 @@ import Full from './views/Full'
 import Deadline from './views/Deadline'
 import MinerInfo from './views/MinerInfo'
 import TinySummary from './components/TinySummary'
+import Gas from './views/Gas'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
+import 'bootstrap/dist/js/bootstrap.bundle.min';
 import './App.scss'
 
 function App () {
@@ -116,28 +118,33 @@ function App () {
             </h1>
           </Link>
         </header>
-        <Switch>
-          <Route path='/miners/:minerId/deadlines/:deadlineId'>
-            <Deadline client={client} miners={miners} head={head} />
-          </Route>
-          <Route path='/miners/:minerId'>
-            <MinerInfo
-              actors={actors}
-              client={client}
-              miners={miners}
-              head={head}
-            />
-          </Route>
-          <Route path='/full'>
-            <Full client={client} miners={miners} />
-          </Route>
-          <Route path='/status'>
-            <Status head={head} spa={spa} client={client} miners={miners} />
-          </Route>
-          <Route path='/'>
-            <Home actors={actors} client={client} head={head} miners={miners} />
-          </Route>
-        </Switch>
+        <div className="container">
+          <Switch>
+            <Route path='/miners/:minerId/deadlines/:deadlineId'>
+              <Deadline client={client} miners={miners} head={head} />
+            </Route>
+            <Route path='/miners/:minerId'>
+              <MinerInfo
+                actors={actors}
+                client={client}
+                miners={miners}
+                head={head}
+              />
+            </Route>
+            <Route path='/full'>
+              <Full client={client} miners={miners} />
+            </Route>
+            <Route path='/status'>
+              <Status head={head} spa={spa} client={client} miners={miners} />
+            </Route>
+            <Route path='/gas'>
+                <Gas client={client} head={head} />
+            </Route>
+            <Route path='/'>
+              <Home actors={actors} client={client} head={head} miners={miners} />
+            </Route>
+          </Switch>
+        </div>
       </div>
     </Router>
   )

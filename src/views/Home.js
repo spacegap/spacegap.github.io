@@ -63,6 +63,10 @@ export default function Home ({ miners, client, actors, head }) {
           sector.
         </div>
       )}
+    <div className="row">
+        See <Link to='/gas'> here </Link> for a detailed gas analysis.
+      </div>
+
     </section>
   )
 }
