@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Summary from '../components/Summary'
+import FilToken from '../components/FilToken'
 
 const d3 = require('d3')
 const f = d3.format(',')
@@ -22,13 +23,16 @@ export default function Home ({ miners, client, actors, head }) {
   const [minersInfo, setMinersInfo] = useState({})
 
   useEffect(() => {
+    if (!miners) {
+      return
+    }
     setMinersInfo(miners)
   }, [miners])
 
   let count = 0
 
   useEffect(() => {
-    if (!client || !head || !miners) {
+    if (!client || !head || !miners || !actors) {
       return
     }
 
@@ -51,19 +55,36 @@ export default function Home ({ miners, client, actors, head }) {
     return () => {
       mounted = false
     }
-  }, [client, head, miners])
+  }, [client, head, miners, actors])
 
   return (
     <section id='home' className='container'>
-      {actors && (
-        <div id='actors' className='section'>
-          <h3>Tokens</h3>
-          <div className='grid'>
-            <Summary
-              title={`${f0(+actors.Supply / 1e18 || 0)} FIL`}
-              desc='Circulating Supply'
-            />
-            {/* <Summary
+      <div id='actors' className='section'>
+        <h3>Tokens</h3>
+        <div className='grid'>
+          <Summary
+            title={
+              actors && (
+                <>
+                  {f0(+actors.Supply / 1e18 || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='Circulating Supply'
+          />
+          <Summary
+            title={
+              actors && (
+                <>
+                  {f3(+actors.Reward.State.ThisEpochReward / 5 / 1e18 || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='Block Reward'
+          />
+          {/* <Summary
               title={`${f0(+actors.Supply.FilBurnt / 1e18 || 0)} FIL`}
               desc='Burnt'
             />
@@ -71,68 +92,81 @@ export default function Home ({ miners, client, actors, head }) {
               desc='Locked'
               title={`${f0(+actors.Supply.FilLocked / 1e18 || 0)} FIL`}
             /> */}
-          </div>
         </div>
-      )}
-      {actors && (
-        <div id='actors2' className='section'>
-          <h3>Power</h3>
-          <div className='grid'>
-            <Summary
-              title={`${f0(
+      </div>
+
+      <div id='actors2' className='section'>
+        <h3>Power</h3>
+        <div className='grid'>
+          <Summary
+            title={
+              actors &&
+              `${f0(
                 +actors.Power.State.TotalBytesCommitted / 2 ** 50 || 0
-              )} PiB`}
-              desc='Network Raw'
-            />
-            <Summary
-              title={`${f3(
-                +actors.Reward.State.ThisEpochReward / 5 / 1e18 || 0
-              )} FIL`}
-              desc='Block Reward'
-            />
-            <Summary
-              desc='Active Miners'
-              title={`${f0(+actors.Power.State.MinerAboveMinPowerCount || 0)}`}
-            />
-          </div>
+              )} PiB`
+            }
+            desc='Network Raw'
+          />
+          <Summary
+            desc='Active Miners'
+            title={
+              actors &&
+              `${f0(+actors.Power.State.MinerAboveMinPowerCount || 0)}`
+            }
+          />
         </div>
-      )}
-      {econSummary && (
-        <div id='economics' className='section'>
-          <h3>Economics</h3>
-          <div className='grid'>
-            {econSummary && (
-              <Summary
-                title={`${f3(econSummary.sectorIp || 0)} FIL`}
-                desc='Sector Pledge'
-              />
-            )}
+      </div>
 
-            {econSummary && (
-              <Summary
-                title={`${f3(econSummary.sectorProjectedReward || 0)} FIL`}
-                desc='Sector 360-Days Reward'
-              />
-            )}
+      <div id='economics' className='section'>
+        <h3>Economics</h3>
+        <div className='grid'>
+          <Summary
+            title={
+              econSummary && (
+                <>
+                  {f3(econSummary.sectorIp || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='Sector Pledge'
+          />
 
-            {econSummary && (
-              <Summary
-                desc='Sector Fault Fee'
-                title={`${f3(econSummary.sectorFaultFee || 0)} FIL`}
-              />
-            )}
-          </div>
-          These numbers are approximate projections based on the current network
-          state and may be incorrect, do your own research.
+          <Summary
+            title={
+              econSummary && (
+                <>
+                  {f3(econSummary.sectorProjectedReward || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='Sector 360-Days Reward'
+          />
+
+          <Summary
+            desc='Sector Fault Fee'
+            title={
+              econSummary && (
+                <>
+                  {f3(econSummary.sectorFaultFee || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+          />
         </div>
-      )}
+        These numbers are approximate projections based on the current network
+        state and may be incorrect, do your own research.
+      </div>
+
       <div className='section'>
         <h3>Gas</h3>
         See <Link to='/gas'> here </Link> for a detailed gas analysis.
       </div>
       <div className='spacerace'>
         <h3>Top miners</h3>
-        <table class='table space'>
+        <table className='table space'>
           <thead>
             <tr>
               <th scope='col'>#</th>
@@ -150,7 +184,7 @@ export default function Home ({ miners, client, actors, head }) {
                 .map((d, i) => (
                   <tr key={i}>
                     <th scope='row'>{i + 1}</th>
-                    <td align='right'>
+                    <td align='right' className='minerAddress'>
                       <Link to={`/miners/${miners[d].address}`}>
                         {miners && miners[d] && miners[d].address}
                       </Link>
@@ -162,16 +196,19 @@ export default function Home ({ miners, client, actors, head }) {
                       PiB
                     </td>
                     <td align='right'>
-                      {minersInfo[d] &&
-                        minersInfo[d].preCommits &&
-                        minersInfo[d].preCommits.Count}
+                      {minersInfo[d] && minersInfo[d].preCommits ? (
+                        minersInfo[d].preCommits.Count
+                      ) : (
+                        <div className='gradient' />
+                      )}
                     </td>
                     <td align='right'>
-                      {minersInfo[d] &&
-                        minersInfo[d].deposits &&
-                        minersInfo[d].deposits.Available}
+                      {minersInfo[d] && minersInfo[d].deposits ? (
+                        `${minersInfo[d].deposits.Available} FIL`
+                      ) : (
+                        <div className='gradient' />
+                      )}
                     </td>
-                    {/* S: {JSON.stringify(minersInfo)} */}
                   </tr>
                 ))}
           </tbody>

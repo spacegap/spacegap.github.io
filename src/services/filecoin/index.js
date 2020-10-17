@@ -33,7 +33,6 @@ function b64ToBn (b64) {
 }
 
 const partitionSchema = height => {
-  console.log('>>>> HEIGHT', height)
   if (!height || height >= 138720) {
     return {
       Sectors: 'buffer',
@@ -258,7 +257,6 @@ export default class Filecoin {
 
   async fetchPartitionsSectors (cid, height) {
     const node = (await this.client.chainGetNode(`${cid['/']}`)).Obj[2][2]
-    console.log('>> partition', node)
     return node.map(partitionRaw => {
       const partitionObj = Fil.methods.decode(
         partitionSchema(height),
@@ -334,7 +332,7 @@ export default class Filecoin {
       return JSON.parse(cached)
 
     const json = await (
-      await fetch('https://filfox.info/api/v0/miner/list/power?pageSize=1000')
+      await fetch('https://filfox.info/api/v1/miner/top-miners/power?count=20')
     ).json()
     const miners = json.miners.reduce((acc, curr) => {
       acc[curr.address] = curr
@@ -354,11 +352,9 @@ export default class Filecoin {
         ? `${state}/1/@Ha:${miner}/1/12`
         : `${state}/@Ha:${miner}/1/11`
     const deadlinesCids = (await this.client.chainGetNode(node)).Obj[0]
-    console.log('d - ', node)
 
     const deadlines = await asyncPool(24, deadlinesCids, async minerCid => {
       const deadline = (await this.client.ChainGetNode(`${minerCid['/']}`)).Obj
-      console.log('d - ', `${minerCid['/']}`)
       return {
         Partitions: deadline[0],
         LiveSectors: deadline[4],
@@ -378,7 +374,6 @@ export default class Filecoin {
       this.client.StateMinerProvingDeadline(hash, head.Cids),
       this.fetchDeadlinesProxy(hash, head)
     ])
-    console.log('>>> got deadline and deadline')
 
     const nextDeadlines = [...Array(48)].map((_, i) => ({
       ...deadlines[(deadline.Index + i) % 48],
@@ -437,7 +432,6 @@ export default class Filecoin {
             ...minersInfo,
             [minerId]: { ...minerInfo }
           })
-          console.log('deadlines setting')
         })
         .catch(e => {
           console.error('failed to fetch deadlines')

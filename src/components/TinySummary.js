@@ -50,56 +50,49 @@ export default function TinySummary ({ client, head }) {
   return (
     <>
       <div className='tiny-grid'>
-        {head && expected && (
-          <div>
-            Filecoin Status{' '}
-            <span>
-              {head.Height < expected
-                ? expected - head.Height === 1
-                  ? 'gathering blocks'
-                  : 'catching up'
-                : 'ok'}
-            </span>
-          </div>
-        )}
-        {head && (
-          <div className='tiny'>
-            Current Tipset{' '}
-            <a href={`https://filfox.info/en/tipset/${head.Height}`}>
-              {f(head.Height)}
-            </a>
-          </div>
-        )}
-        {expected && (
-          <div className='tiny'>
-            Expected Tipset{' '}
-            <a href={`https://filfox.info/en/tipset/${expected}`}>
-              {f(expected)}
-            </a>
-          </div>
-        )}
-        {round && (
-          <>
-            <div className='tiny'>
-              Drand Status{' '}
-              <span>
-                {round.current < round.expected ? 'catching up' : 'ok'}
-              </span>
-            </div>
-            <div className='tiny'>
-              Current Drand{' '}
-              <a href={`https://api.drand.sh/public/${round.current}`}>
-                {f(round.current)}
-              </a>
-            </div>
-            <div className='tiny'>
-              Expected Drand{' '}
-              <a href={`https://api.drand.sh/public/${round.expected}`}>
-                {f(round.expected)}
-              </a>
-            </div>
-          </>
-        )}
+        <div>
+          Filecoin Status{' '}
+          <span>
+            {head && expected && head.Height < expected
+              ? expected - head.Height === 1
+                ? 'gathering blocks'
+                : 'catching up'
+              : 'ok'}
+          </span>
+        </div>
+
+        <div className='tiny'>
+          Current Tipset{' '}
+          <a href={`https://filfox.info/en/tipset/${head && head.Height}`}>
+            {head && f(head.Height)}
+          </a>
+        </div>
+
+        <div className='tiny'>
+          Expected Tipset{' '}
+          <a href={`https://filfox.info/en/tipset/${expected}`}>
+            {f(expected)}
+          </a>
+        </div>
+
+        <div className='tiny'>
+          Drand Status{' '}
+          <span>
+            {round && round.current < round.expected ? 'catching up' : 'ok'}
+          </span>
+        </div>
+        <div className='tiny'>
+          Current Drand{' '}
+          <a href={`https://api.drand.sh/public/${round && round.current}`}>
+            {f(round && round.current)}
+          </a>
+        </div>
+        <div className='tiny'>
+          Expected Drand{' '}
+          <a href={`https://api.drand.sh/public/${round && round.expected}`}>
+            {f(round && round.expected)}
+          </a>
+        </div>
       </div>
     </>
   )

@@ -5,6 +5,7 @@ import Summary from '../components/Summary'
 import ReactTooltip from 'react-tooltip'
 import WindowPoSt from '../components/WindowPoSt'
 import MinerBar from '../components/MinerBar'
+import FilToken from '../components/FilToken'
 
 const d3 = require('d3')
 const f = d3.format(',')
@@ -54,81 +55,125 @@ function MinerInfo ({ client, miners, head, actors }) {
       />
       <div id='deposits' className='section'>
         <div className='grid'>
-          {miner.deposits && (
-            <Summary
-              title={`${f(miner.deposits.Balance || 0)} FIL`}
-              desc='Balance'
-            />
-          )}
+          <Summary
+            title={
+              miner.deposits && (
+                <>
+                  {f(miner.deposits.Balance || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='Balance'
+          />
 
-          {miner.deposits && (
-            <Summary
-              title={`${f(miner.deposits.Available || 0)} FIL`}
-              desc='Available'
-            />
-          )}
+          <Summary
+            title={
+              miner.deposits && (
+                <>
+                  {f(miner.deposits.Available || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='Available'
+          />
 
-          {miner.deposits && (
-            <Summary
-              desc='Vesting'
-              title={`${f(miner.deposits.LockedFunds || 0)} FIL`}
-            />
-          )}
+          <Summary
+            desc='Vesting'
+            title={
+              miner.deposits && (
+                <>
+                  {f(miner.deposits.LockedFunds || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+          />
         </div>
         <div className='grid grid-4'>
-          {miner.deposits && (
-            <Summary
-              title={`${f(miner.deposits.InitialPledge || 0)} FIL`}
-              desc='Initial Pledge'
-            />
-          )}
-          {miner.deposits && (
-            <Summary
-              desc='PreCommit Deposit'
-              title={`${f(miner.deposits.PreCommitDeposits || 0)} FIL`}
-            />
-          )}
-          {miner.deposits && (
-            <Summary
-              title={`${f(miner.deposits.FeeDebt || 0)} FIL`}
-              desc='Fee Debt'
-            />
-          )}
-          {miner.deposits && sectorFaultFee && (
-            <Summary
-              title={`${f2(
+          <Summary
+            title={
+              miner.deposits && (
+                <>
+                  {f(miner.deposits.InitialPledge || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='Initial Pledge'
+          />
+
+          <Summary
+            desc='PreCommit Deposit'
+            title={
+              miner.deposits && (
+                <>
+                  {f(miner.deposits.PreCommitDeposits || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+          />
+
+          <Summary
+            title={
+              miner.deposits && (
+                <>
+                  {f(miner.deposits.FeeDebt || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='Fee Debt'
+          />
+
+          <Summary
+            title={
+              miner.deposits &&
+              sectorFaultFee &&
+              `${f2(
                 (+miner.deposits.Available + +miner.deposits.LockedFunds) /
                   +sectorFaultFee || 0
-              )}`}
-              desc='Faults to Debt'
-            />
-          )}
+              )}`
+            }
+            desc='Faults to Debt'
+          />
         </div>
       </div>
 
       <div id='sectors'>
         <div className='grid grid-4'>
-          {miner.deadlines && (
-            <Summary
-              title={`${f2((miner.deadlines.SectorsCount * 32) / 1024)} TiB`}
-              desc={`${f(miner.deadlines.SectorsCount || 0)} Total Sectors`}
-            />
-          )}
-          {miner.deadlines && (
-            <Summary
-              title={`${f2((miner.deadlines.ActiveCount * 32) / 1024)} TiB`}
-              desc={`${f(miner.deadlines.ActiveCount || 0)} Active Sectors`}
-            />
-          )}
-          {miner.deadlines && (
-            <Summary
-              title={`${f2((miner.deadlines.FaultsCount * 32) / 1024)} TiB`}
-              desc={`${f(miner.deadlines.FaultsCount || 0)} Faulty Sectors`}
-            />
-          )}
-          {miner.preCommits && (
-            <Summary title={f(miner.preCommits.Count || 0)} desc='PreCommits' />
-          )}
+          <Summary
+            title={
+              miner.deadlines &&
+              `${f2((miner.deadlines.SectorsCount * 32) / 1024)} TiB`
+            }
+            desc={`${miner.deadlines &&
+              f(miner.deadlines.SectorsCount || 0)} Total Sectors`}
+          />
+
+          <Summary
+            title={
+              miner.deadlines &&
+              `${f2((miner.deadlines.ActiveCount * 32) / 1024)} TiB`
+            }
+            desc={`${miner.deadlines &&
+              f(miner.deadlines.ActiveCount || 0)} Active Sectors`}
+          />
+          <Summary
+            title={
+              miner.deadlines &&
+              `${f2((miner.deadlines.FaultsCount * 32) / 1024)} TiB`
+            }
+            desc={`${miner.deadlines &&
+              f(miner.deadlines.FaultsCount || 0)} Faulty Sectors`}
+          />
+
+          <Summary
+            title={miner.preCommits && f(miner.preCommits.Count || 0)}
+            desc='PreCommits'
+          />
         </div>
       </div>
 

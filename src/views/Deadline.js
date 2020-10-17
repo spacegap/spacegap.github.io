@@ -109,29 +109,40 @@ function Deadline ({ miners, client, head }) {
       />
       <div className='section wpost'>
         <div className='grid'>
-          {minerDeadlines && minerDeadlines[0] && (
-            <Summary
-              title={`${f2(
+          <Summary
+            title={
+              minerDeadlines &&
+              minerDeadlines[0] &&
+              `${f2(
                 (+minerDeadlines[0].deadlines[deadlineId].LiveSectors * 32) /
                   1024
-              )} TiB`}
-              desc={`${f(
-                minerDeadlines[0].deadlines[deadlineId].LiveSectors
-              )} Live Sectors`}
-            />
-          )}
-          {minerDeadlines && minerDeadlines[0] && (
-            <Summary
-              title={`${f2(
+              )} TiB`
+            }
+            desc={`${
+              minerDeadlines && minerDeadlines[0]
+                ? f(minerDeadlines[0].deadlines[deadlineId].LiveSectors)
+                : ''
+            } Live Sectors`}
+          />
+
+          <Summary
+            title={
+              minerDeadlines &&
+              minerDeadlines[0] &&
+              `${f2(
                 +minerDeadlines[0].deadlines[deadlineId].FaultyPower.Raw /
                   (1024 * 1024 * 1024 * 1024)
-              )} TiB`}
-              desc={`${f(
-                +minerDeadlines[0].deadlines[deadlineId].FaultyPower.Raw /
-                  ((1024 * 1024 * 1024 * 1024) / 32)
-              )} Faulty Sectors`}
-            />
-          )}
+              )} TiB`
+            }
+            desc={`${
+              minerDeadlines && minerDeadlines[0]
+                ? f(
+                    +minerDeadlines[0].deadlines[deadlineId].FaultyPower.Raw /
+                      ((1024 * 1024 * 1024 * 1024) / 32)
+                  )
+                : ''
+            } Faulty Sectors`}
+          />
         </div>
       </div>
       <div className='section wpost'>
