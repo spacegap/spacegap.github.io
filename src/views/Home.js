@@ -32,6 +32,10 @@ export default function Home ({ miners, client, actors, head }) {
       return
     }
 
+    if (!minersInfo) {
+      return
+    }
+
     console.log('reload miners list', count++)
 
     let mounted = true
