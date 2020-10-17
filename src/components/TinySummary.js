@@ -55,8 +55,8 @@ export default function TinySummary ({ client, head }) {
           <span>
             {head && expected && head.Height < expected
               ? expected - head.Height === 1
-                ? 'gathering blocks'
-                : 'catching up'
+                ? 'behind'
+                : 'receiving'
               : 'ok'}
           </span>
         </div>

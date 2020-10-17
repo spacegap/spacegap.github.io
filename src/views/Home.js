@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { withRouter } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import Summary from '../components/Summary'
 import FilToken from '../components/FilToken'
@@ -9,7 +10,7 @@ const f0 = d3.format(',.0f')
 const f3 = d3.format(',.3f')
 const f1 = d3.format(',.1f')
 
-export default function Home ({ miners, client, actors, head }) {
+function Home ({ miners, client, actors, head }) {
   const econSummary =
     actors &&
     client.computeEconomics(head, actors, {
@@ -24,6 +25,7 @@ export default function Home ({ miners, client, actors, head }) {
 
   useEffect(() => {
     if (!miners) {
+      setMinersInfo({})
       return
     }
     setMinersInfo(miners)
@@ -37,6 +39,7 @@ export default function Home ({ miners, client, actors, head }) {
     }
 
     if (!minersInfo) {
+      setMinersInfo({})
       return
     }
 
@@ -47,7 +50,7 @@ export default function Home ({ miners, client, actors, head }) {
       if (mounted) setMinersInfo(info)
     }
 
-    Object.keys(miners).forEach(minerId => {
+    Object.keys(minersInfo).forEach(minerId => {
       client.updateMinerInfo(minersInfo, minerId, setMinersIfMounted, head, {
         deadlines: false
       })
@@ -57,8 +60,23 @@ export default function Home ({ miners, client, actors, head }) {
     }
   }, [client, head, miners, actors])
 
+  const handleSearch = e => {
+    if (e.key === 'Enter') {
+      window.location.href = `/#/miners/${e.target.value}`
+    }
+  }
+
   return (
     <section id='home' className='container'>
+      <div className='section'>
+        <div class='search-bar'>
+          <input
+            type='text'
+            placeholder='look up a miner address'
+            onKeyDown={handleSearch}
+          />
+        </div>
+      </div>
       <div id='actors' className='section'>
         <h3>Tokens</h3>
         <div className='grid'>
@@ -225,3 +243,5 @@ export default function Home ({ miners, client, actors, head }) {
     </section>
   )
 }
+
+export default withRouter(Home)

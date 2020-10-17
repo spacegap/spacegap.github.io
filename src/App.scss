@@ -207,6 +207,10 @@ h3 {
 }
 
 .tiny-grid {
+  &:hover {
+    opacity: 1;
+  }
+  opacity: 0.5;
   display: grid;
   grid-column-gap: 16px;
   grid-row-gap: 16px;
@@ -378,4 +382,24 @@ td .gradient {
 
 .card-body table {
   margin-bottom: 0;
+}
+
+.search-bar {
+  border: 1px solid #dfe8f9;
+  width: 300px;
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: 25px;
+  display: flex;
+  input {
+    font-family: "Inter var";
+    border: 0;
+    outline: none;
+    text-align: center;
+    margin: 0 auto;
+  }
+}
+
+a {
+  outline: 0;
 }
