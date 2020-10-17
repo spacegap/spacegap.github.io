@@ -314,3 +314,10 @@ h3 {
   font-size: 120px;
   border-bottom: 1px solid;
 }
+
+.table.space {
+  td,
+  th {
+    text-align: right;
+  }
+}

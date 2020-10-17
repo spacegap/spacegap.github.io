@@ -32,10 +32,15 @@ function Deadline ({ miners, client, head }) {
 
   useEffect(() => {
     if (!todayDeadlines) return
+
+    console.log('>> today is set', todayDeadlines)
     client
       .fetchPartitionsSectors(todayDeadlines.deadlines[deadlineId].Partitions)
       .then(d => {
         setPartitions(d)
+      })
+      .catch(e => {
+        console.error('failed to load sectors')
       })
   }, [todayDeadlines])
 
@@ -48,23 +53,32 @@ function Deadline ({ miners, client, head }) {
     let firstTime = true
     const continueLoad = () => firstTime || mounted
 
-    const epochs = [...Array(38)].map((_, i) => ({
-      height: head.Height - i * 2880,
-      day: i
-    }))
+    const days = Math.ceil(head.Height / 2880)
+    const epochs = [...Array(days)]
+      .map((_, i) => ({
+        height: i * 2880 <= head.Height ? i * 2880 : head.Height,
+        day: days - i - 1
+      }))
+      .reverse()
+
+    console.log('>>> epochs', epochs)
 
     if (todayDeadlines) {
-      if (head.Height < todayDeadlines.deadlines[deadlineId].Close) {
-        console.log(head.Height, todayDeadlines.deadlines[deadlineId].Close)
-        return
-      }
+      return
     }
 
     try {
       asyncPool(40, epochs, async ({ day, height }) => {
+        let prevHead
         try {
-          const prevHead = await client.fetchTipsetHead(height)
+          prevHead = await client.fetchTipsetHead(height)
           if (!continueLoad()) return
+        } catch (e) {
+          console.log('could not fetch head', minerId, day, height, e)
+          return
+        }
+
+        try {
           const deadlines = await client.fetchDeadlines(minerId, prevHead)
           if (!continueLoad()) return
           minerDeadlines[day] = deadlines
@@ -73,7 +87,7 @@ function Deadline ({ miners, client, head }) {
             setTodayDeadlines(deadlines)
           }
         } catch (e) {
-          console.log('could not find', day, height)
+          console.log('could not find', minerId, day, height, e)
         }
       })
     } catch (e) {

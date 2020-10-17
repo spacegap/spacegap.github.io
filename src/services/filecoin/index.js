@@ -191,6 +191,20 @@ function decodeRLE2 (buf) {
   return res
 }
 
+function decodeRLE3 (runs) {
+  let cur = 0
+  const res = []
+  let acc = 0
+  for (let r of runs) {
+    for (let i = 0; i < r; i++) {
+      if (cur === 1) res.push(acc)
+      acc++
+    }
+    cur = 1 - cur
+  }
+  return res
+}
+
 export default class Filecoin {
   constructor (endpointUrl) {
     this.url = endpointUrl
@@ -219,8 +233,32 @@ export default class Filecoin {
     return this.client.chainHead()
   }
 
+  // async fetchPartitionsSectors (head, miner, deadline) {
+  //   const partitions = await this.client.StateMinerPartitions(
+  //     miner,
+  //     deadline,
+  //     head.Cids
+  //   )
+  //   partitions.map(p => ({
+  //     Sectors: decodeRLE3(p.AllSectors),
+  //     Faults: decodeRLE3(p.FaultySectors).reduce((acc, curr) => {
+  //       acc[curr] = true
+  //       return acc
+  //     }, {}),
+  //     Recoveries: decodeRLE2(p.RecoveringSectors).reduce((acc, curr) => {
+  //       acc[curr] = true
+  //       return acc
+  //     }, {}),
+  //     Active: decodeRLE2(p.ActiveSectors).reduce((acc, curr) => {
+  //       acc[curr] = true
+  //       return acc
+  //     }, {})
+  //   }))
+  // }
+
   async fetchPartitionsSectors (cid, height) {
     const node = (await this.client.chainGetNode(`${cid['/']}`)).Obj[2][2]
+    console.log('>> partition', node)
     return node.map(partitionRaw => {
       const partitionObj = Fil.methods.decode(
         partitionSchema(height),
@@ -292,7 +330,7 @@ export default class Filecoin {
   async getMiners () {
     const cached = window.localStorage.getItem('miners')
     const cachedTime = window.localStorage.getItem('time')
-    if (cached && cachedTime && Date.now() - +cachedTime > 60000)
+    if (cached && cachedTime && Date.now() - +cachedTime < 1000)
       return JSON.parse(cached)
 
     const json = await (
@@ -316,9 +354,11 @@ export default class Filecoin {
         ? `${state}/1/@Ha:${miner}/1/12`
         : `${state}/@Ha:${miner}/1/11`
     const deadlinesCids = (await this.client.chainGetNode(node)).Obj[0]
+    console.log('d - ', node)
 
     const deadlines = await asyncPool(24, deadlinesCids, async minerCid => {
       const deadline = (await this.client.ChainGetNode(`${minerCid['/']}`)).Obj
+      console.log('d - ', `${minerCid['/']}`)
       return {
         Partitions: deadline[0],
         LiveSectors: deadline[4],
@@ -368,6 +408,64 @@ export default class Filecoin {
       ActiveCount: SectorsCount - FaultsCount,
       deadline
     }
+  }
+
+  async updateMinerInfo (
+    minersInfo,
+    minerId,
+    setMinersIfMounted,
+    head,
+    filter = { deadlines: true }
+  ) {
+    const minerInfo = minersInfo[minerId]
+    setMinersIfMounted({ ...minersInfo, [minerId]: { ...minerInfo } })
+
+    this.fetchMinerInfo(minerId, head)
+      .then(info => {
+        minerInfo.info = info
+        setMinersIfMounted({ ...minersInfo, [minerId]: { ...minerInfo } })
+      })
+      .catch(e => {
+        console.error('failed to fetch miner info')
+      })
+
+    if (filter.deadlines)
+      this.fetchDeadlines(minerId, head)
+        .then(deadlines => {
+          minerInfo.deadlines = deadlines
+          setMinersIfMounted({
+            ...minersInfo,
+            [minerId]: { ...minerInfo }
+          })
+          console.log('deadlines setting')
+        })
+        .catch(e => {
+          console.error('failed to fetch deadlines')
+        })
+
+    this.fetchDeposits(minerId, head)
+      .then(deposits => {
+        minerInfo.deposits = deposits
+        setMinersIfMounted({
+          ...minersInfo,
+          [minerId]: { ...minerInfo }
+        })
+      })
+      .catch(e => {
+        console.error('failed to fetch deposits')
+      })
+
+    this.fetchPreCommittedSectors(minerId, head)
+      .then(preCommits => {
+        minerInfo.preCommits = preCommits
+        setMinersIfMounted({
+          ...minersInfo,
+          [minerId]: { ...minerInfo }
+        })
+      })
+      .catch(e => {
+        console.error('failed to fetch precommitted sectors', e)
+      })
   }
 
   async fetchPreCommittedSectors (hash, head) {

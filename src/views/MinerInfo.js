@@ -12,7 +12,7 @@ const f2 = d3.format(',.0f')
 
 function MinerInfo ({ client, miners, head, actors }) {
   const { minerId } = useParams()
-  const [miner, setMiner] = useState({ id: minerId })
+  const [minersInfo, setMinersInfo] = useState({ [minerId]: { id: minerId } })
 
   const sectorFaultFee =
     actors &&
@@ -27,70 +27,22 @@ function MinerInfo ({ client, miners, head, actors }) {
     }
 
     let mounted = true
-
-    const fetchInfo = () => {
-      setMiner({ ...miner })
-
-      client
-        .fetchMinerInfo(minerId, head)
-        .then(info => {
-          if (mounted) {
-            miner.info = info
-            setMiner({ ...miner })
-          }
-        })
-        .catch(e => {
-          console.error('failed to fetch miner info')
-        })
-
-      client
-        .fetchDeadlines(minerId, head)
-        .then(deadlines => {
-          if (mounted) {
-            miner.deadlines = deadlines
-            setMiner({ ...miner })
-            console.log('deadlines setting')
-          }
-        })
-        .catch(e => {
-          console.error('failed to fetch deadlines')
-        })
-
-      client
-        .fetchDeposits(minerId, head)
-        .then(deposits => {
-          if (mounted) {
-            miner.deposits = deposits
-            setMiner({ ...miner })
-          }
-        })
-        .catch(e => {
-          console.error('failed to fetch deposits')
-        })
-
-      client
-        .fetchPreCommittedSectors(minerId, head)
-        .then(preCommits => {
-          if (mounted) {
-            miner.preCommits = preCommits
-            setMiner({ ...miner })
-          }
-        })
-        .catch(e => {
-          console.error('failed to fetch precommitted sectors', e)
-        })
+    const setMinersIfMounted = info => {
+      if (mounted) setMinersInfo(info)
     }
 
-    fetchInfo()
+    client.updateMinerInfo(minersInfo, minerId, setMinersIfMounted, head)
 
     return () => {
       mounted = false
     }
   }, [client, head, minerId])
 
-  if (!miner || !head) {
+  if (!minerId || !head || !minersInfo[minerId]) {
     return <></>
   }
+
+  const miner = minersInfo[minerId]
 
   return (
     <section className='container'>

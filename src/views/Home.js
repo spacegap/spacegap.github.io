@@ -6,6 +6,7 @@ const d3 = require('d3')
 const f = d3.format(',')
 const f0 = d3.format(',.0f')
 const f3 = d3.format(',.3f')
+const f1 = d3.format(',.1f')
 
 export default function Home ({ miners, client, actors, head }) {
   const econSummary =
@@ -18,26 +19,38 @@ export default function Home ({ miners, client, actors, head }) {
   const PreCommitGasAvg = 21701073
   const ProveCommitGasAvg = 47835932
 
+  const [minersInfo, setMinersInfo] = useState({})
+
+  useEffect(() => {
+    setMinersInfo(miners)
+  }, [miners])
+
+  let count = 0
+
+  useEffect(() => {
+    if (!client || !head || !miners) {
+      return
+    }
+
+    console.log('reload miners list', count++)
+
+    let mounted = true
+    const setMinersIfMounted = info => {
+      if (mounted) setMinersInfo(info)
+    }
+
+    Object.keys(miners).forEach(minerId => {
+      client.updateMinerInfo(minersInfo, minerId, setMinersIfMounted, head, {
+        deadlines: false
+      })
+    })
+    return () => {
+      mounted = false
+    }
+  }, [client, head, miners])
+
   return (
     <section id='home' className='container'>
-      <div className='spacerace'>
-        <h3>Top miners</h3>
-        {miners &&
-          Object.keys(miners)
-            .slice(0, 5)
-            .map((d, i) => (
-              <div key={i}>
-                {i + 1}.{' '}
-                <Link to={`/miners/${miners[d].address}`}>
-                  {miners[d].address}
-                </Link>
-              </div>
-            ))}
-        <div>
-          See deadlines of <Link to='/full'>top 50 miners</Link> or click on
-          individual miners or the <Link to='/status'>network status</Link>.
-        </div>
-      </div>
       {actors && (
         <div id='actors' className='section'>
           <h3>Tokens</h3>
@@ -112,6 +125,57 @@ export default function Home ({ miners, client, actors, head }) {
       <div className='section'>
         <h3>Gas</h3>
         See <Link to='/gas'> here </Link> for a detailed gas analysis.
+      </div>
+      <div className='spacerace'>
+        <h3>Top miners</h3>
+        <table class='table space'>
+          <thead>
+            <tr>
+              <th scope='col'>#</th>
+              <th scope='col'>Miner</th>
+              <th scope='col'>Power</th>
+              <th scope='col'>PreCommits</th>
+              <th scope='col'>Available Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {minersInfo &&
+              miners &&
+              Object.keys(miners)
+                // .slice(0, 5)
+                .map((d, i) => (
+                  <tr key={i}>
+                    <th scope='row'>{i + 1}</th>
+                    <td align='right'>
+                      <Link to={`/miners/${miners[d].address}`}>
+                        {miners && miners[d] && miners[d].address}
+                      </Link>
+                    </td>
+                    <td align='right'>
+                      {f1(
+                        minersInfo[d] && +minersInfo[d].rawBytePower / 2 ** 50
+                      )}{' '}
+                      PiB
+                    </td>
+                    <td align='right'>
+                      {minersInfo[d] &&
+                        minersInfo[d].preCommits &&
+                        minersInfo[d].preCommits.Count}
+                    </td>
+                    <td align='right'>
+                      {minersInfo[d] &&
+                        minersInfo[d].deposits &&
+                        minersInfo[d].deposits.Available}
+                    </td>
+                    {/* S: {JSON.stringify(minersInfo)} */}
+                  </tr>
+                ))}
+          </tbody>
+        </table>
+        <div>
+          See deadlines of <Link to='/full'>top 50 miners</Link> or click on
+          individual miners or the <Link to='/status'>network status</Link>.
+        </div>
       </div>
     </section>
   )
