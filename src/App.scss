@@ -346,7 +346,7 @@ h3 {
     #5b9dff,
     #0c50ff
   );
-  opacity: 0.4;
+  opacity: 0.5;
   background-size: 1000px 640px;
 
   position: relative;
@@ -374,4 +374,8 @@ td .gradient {
 
 .minerAddress {
   font-weight: 800;
+}
+
+.card-body table {
+  margin-bottom: 0;
 }

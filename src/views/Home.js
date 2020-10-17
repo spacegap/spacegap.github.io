@@ -164,58 +164,62 @@ export default function Home ({ miners, client, actors, head }) {
         <h3>Gas</h3>
         See <Link to='/gas'> here </Link> for a detailed gas analysis.
       </div>
-      <div className='spacerace'>
+      <div className='section'>
         <h3>Top miners</h3>
-        <table className='table space'>
-          <thead>
-            <tr>
-              <th scope='col'>#</th>
-              <th scope='col'>Miner</th>
-              <th scope='col'>Power</th>
-              <th scope='col'>PreCommits</th>
-              <th scope='col'>Available Balance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {minersInfo &&
-              miners &&
-              Object.keys(miners)
-                // .slice(0, 5)
-                .map((d, i) => (
-                  <tr key={i}>
-                    <th scope='row'>{i + 1}</th>
-                    <td align='right' className='minerAddress'>
-                      <Link to={`/miners/${miners[d].address}`}>
-                        {miners && miners[d] && miners[d].address}
-                      </Link>
-                    </td>
-                    <td align='right'>
-                      {f1(
-                        minersInfo[d] && +minersInfo[d].rawBytePower / 2 ** 50
-                      )}{' '}
-                      PiB
-                    </td>
-                    <td align='right'>
-                      {minersInfo[d] && minersInfo[d].preCommits ? (
-                        minersInfo[d].preCommits.Count
-                      ) : (
-                        <div className='gradient' />
-                      )}
-                    </td>
-                    <td align='right'>
-                      {minersInfo[d] && minersInfo[d].deposits ? (
-                        `${minersInfo[d].deposits.Available} FIL`
-                      ) : (
-                        <div className='gradient' />
-                      )}
-                    </td>
-                  </tr>
-                ))}
-          </tbody>
-        </table>
         <div>
           See deadlines of <Link to='/full'>top 50 miners</Link> or click on
           individual miners or the <Link to='/status'>network status</Link>.
+        </div>
+      </div>
+      <div className='spacerace card section'>
+        <div className='card-body'>
+          <table className='table table-sm space table-borderless'>
+            <thead>
+              <tr>
+                <th scope='col'>#</th>
+                <th scope='col'>Miner</th>
+                <th scope='col'>Power</th>
+                <th scope='col'>PreCommits</th>
+                <th scope='col'>Available Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {minersInfo &&
+                miners &&
+                Object.keys(miners)
+                  // .slice(0, 5)
+                  .map((d, i) => (
+                    <tr key={i}>
+                      <th scope='row'>{i + 1}</th>
+                      <td align='right' className='minerAddress'>
+                        <Link to={`/miners/${miners[d].address}`}>
+                          {miners && miners[d] && miners[d].address}
+                        </Link>
+                      </td>
+                      <td align='right'>
+                        {f1(
+                          minersInfo[d] && +minersInfo[d].rawBytePower / 2 ** 50
+                        )}{' '}
+                        PiB
+                      </td>
+                      <td align='right'>
+                        {minersInfo[d] && minersInfo[d].preCommits ? (
+                          minersInfo[d].preCommits.Count
+                        ) : (
+                          <div className='gradient' />
+                        )}
+                      </td>
+                      <td align='right'>
+                        {minersInfo[d] && minersInfo[d].deposits ? (
+                          `${minersInfo[d].deposits.Available} FIL`
+                        ) : (
+                          <div className='gradient' />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
