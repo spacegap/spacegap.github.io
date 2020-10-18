@@ -48,7 +48,7 @@ export default function TinySummary ({ client, head }) {
   }, [client, head, round])
 
   return (
-    <>
+    <div className='d-none d-md-block'>
       <div className='tiny-grid'>
         <div>
           Filecoin Status{' '}
@@ -94,6 +94,6 @@ export default function TinySummary ({ client, head }) {
           </a>
         </div>
       </div>
-    </>
+    </div>
   )
 }
