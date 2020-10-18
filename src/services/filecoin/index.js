@@ -104,11 +104,12 @@ const preCommitSchema = {
     verified_deal_weight: 'bigint'
   }
 }
+const BigInt = window.BigInt
 
 function bytesToBig (p) {
-  let acc = 0n
+  let acc = BigInt(0)
   for (let i = 0; i < p.length; i++) {
-    acc *= 256n
+    acc *= BigInt(256)
     acc += window.BigInt(p[i])
   }
   return acc
