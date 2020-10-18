@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { withRouter } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import Summary from '../components/Summary'
+import Spacegap from '../components/Spacegap'
 import FilToken from '../components/FilToken'
 
 const d3 = require('d3')
@@ -68,6 +69,7 @@ function Home ({ miners, client, actors, head }) {
 
   return (
     <section id='home' className='container'>
+      <Spacegap />
       <div className='section'>
         <div class='search-bar'>
           <input
