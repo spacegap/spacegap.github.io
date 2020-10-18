@@ -12,6 +12,7 @@ const f3 = d3.format(',.3f')
 const f1 = d3.format(',.1f')
 
 function Market ({ miners, client, actors, head }) {
+  const [annotations, setAnnotations] = useState({})
   const econSummary =
     actors &&
     client.computeEconomics(head, actors, {
@@ -23,6 +24,26 @@ function Market ({ miners, client, actors, head }) {
   const ProveCommitGasAvg = 47835932
 
   const [minersInfo, setMinersInfo] = useState({})
+
+  useEffect(() => {
+    const url =
+      'https://raw.githubusercontent.com/jimpick/workshop-client-testnet/spacerace/src/annotations-spacerace-slingshot-medium.js'
+    async function run () {
+      const resp = await fetch(url)
+      const slingshotTestResultsJs = await resp.text()
+      const fixedJs =
+        slingshotTestResultsJs.replace(/export.*/m, '') + '; annotations'
+      const annotations = eval(fixedJs)
+      const filteredAnnotations = {}
+      for (const miner in annotations) {
+        if (annotations[miner].match(/(active,|sealing,)/)) {
+          filteredAnnotations[miner] = annotations[miner]
+        }
+      }
+      setAnnotations(filteredAnnotations)
+    }
+    run()
+  }, [])
 
   useEffect(() => {
     // if (!miners) {
@@ -127,6 +148,7 @@ function Market ({ miners, client, actors, head }) {
               {minersInfo &&
                 miners &&
                 Object.keys(miners)
+                  .filter(miner => annotations[miner])
                   // .slice(0, 5)
                   .map((d, i) => (
                     <tr key={i}>
