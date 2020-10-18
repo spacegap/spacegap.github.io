@@ -4,10 +4,13 @@ import { HashRouter as Router, Switch, Route, Link } from 'react-router-dom'
 import Filecoin from './services/filecoin'
 
 import Home from './views/Home'
+import Market from './views/Market'
 import Status from './views/Status'
 import Full from './views/Full'
 import Deadline from './views/Deadline'
 import MinerInfo from './views/MinerInfo'
+import AccountInfo from './views/AccountInfo'
+import AddressInfo from './views/AddressInfo'
 import TinySummary from './components/TinySummary'
 import Gas from './views/Gas'
 
@@ -131,6 +134,22 @@ function App () {
                 head={head}
               />
             </Route>
+            <Route path='/address/:minerId'>
+              <AddressInfo
+                actors={actors}
+                client={client}
+                miners={miners}
+                head={head}
+              />
+            </Route>
+            <Route path='/accounts/:minerId'>
+              <AccountInfo
+                actors={actors}
+                client={client}
+                miners={miners}
+                head={head}
+              />
+            </Route>
             <Route path='/full'>
               <Full client={client} miners={miners} />
             </Route>
@@ -139,6 +158,14 @@ function App () {
             </Route>
             <Route path='/gas'>
               <Gas client={client} head={head} />
+            </Route>
+            <Route path='/market'>
+              <Market
+                actors={actors}
+                client={client}
+                head={head}
+                miners={miners}
+              />
             </Route>
             <Route path='/'>
               <Home

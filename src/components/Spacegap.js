@@ -23,14 +23,12 @@ function Spacegap () {
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY > 100 ? 1 : window.scrollY / 100
-      console.log(scrollY)
+
       // const a = 0.2 + 0.13 * scrollY
       const a = 1.6 - 1.21 * scrollY
       const b = 3 - (3 - 0.43) * scrollY
       obs.redefine('phi', a)
       obs.redefine('time', b)
-      console.log('a', a)
-      console.log('b', b)
     }
     window.addEventListener('scroll', handleScroll)
     return () => {

@@ -14,10 +14,11 @@ export default function MinerBar ({
       <div className='minerId'>
         {!deadlineId && (
           <>
-            <Link to={`/miners/${minerId}`}>{minerId}</Link>
+            <Link to={`/address/${minerId}`}>{minerId}</Link>
             <span className='tinyarrow'>
               <a href={`https://filfox.info/en/address/${minerId}`}>↗</a>
             </span>
+            <span className='rekt rekt-miner'>MINER</span>
             {miner && miner.deposits && +miner.deposits.FeeDebt !== 0 && (
               <span className='rekt'>DEBT</span>
             )}
@@ -35,7 +36,7 @@ export default function MinerBar ({
         <>
           <div className='backto'>
             <Link to={`/miners/${minerId}`}>
-              See miner
+              See address
               <span className='bolder'> {minerId}</span>
             </Link>
           </div>

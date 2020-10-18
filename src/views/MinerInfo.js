@@ -149,8 +149,8 @@ function MinerInfo ({ client, miners, head, actors }) {
               miner.deadlines &&
               `${f2((miner.deadlines.SectorsCount * 32) / 1024)} TiB`
             }
-            desc={`${miner.deadlines &&
-              f(miner.deadlines.SectorsCount || 0)} Total Sectors`}
+            desc={`${(miner.deadlines && f(miner.deadlines.SectorsCount)) ||
+              ''} Total Sectors`}
           />
 
           <Summary
@@ -158,20 +158,20 @@ function MinerInfo ({ client, miners, head, actors }) {
               miner.deadlines &&
               `${f2((miner.deadlines.ActiveCount * 32) / 1024)} TiB`
             }
-            desc={`${miner.deadlines &&
-              f(miner.deadlines.ActiveCount || 0)} Active Sectors`}
+            desc={`${(miner.deadlines && f(miner.deadlines.ActiveCount)) ||
+              ''} Active Sectors`}
           />
           <Summary
             title={
               miner.deadlines &&
               `${f2((miner.deadlines.FaultsCount * 32) / 1024)} TiB`
             }
-            desc={`${miner.deadlines &&
-              f(miner.deadlines.FaultsCount || 0)} Faulty Sectors`}
+            desc={`${(miner.deadlines && f(miner.deadlines.FaultsCount)) ||
+              ''} Faulty Sectors`}
           />
 
           <Summary
-            title={miner.preCommits && f(miner.preCommits.Count || 0)}
+            title={(miner.preCommits && f(miner.preCommits.Count)) || ''}
             desc='PreCommits'
           />
         </div>
@@ -268,6 +268,9 @@ function MinerInfo ({ client, miners, head, actors }) {
               </ReactTooltip>
             </div>
           </div>
+          {miner.preCommits.PreCommitDeadlines.length === 0 && (
+            <div>No new sectors</div>
+          )}
           <div className='deadlines provecommit'>
             {miner.preCommits.PreCommitDeadlines.map((d, i) => (
               <div key={i} className='deadline'>

@@ -32,6 +32,32 @@ function b64ToBn (b64) {
   return window.BigInt('0x' + hex.join(''))
 }
 
+const codeMap = {
+  bafkqaddgnfwc6mjpon4xg5dfnu: 'systemActor',
+  bafkqactgnfwc6mjpnfxgs5a: 'initActor',
+  bafkqaddgnfwc6mjpojsxoylsmq: 'rewardActor',
+  bafkqactgnfwc6mjpmnzg63q: 'cronActor',
+  bafkqaetgnfwc6mjpon2g64tbm5sxa33xmvza: 'storagePowerActor',
+  bafkqae3gnfwc6mjpon2g64tbm5sw2ylsnnsxi: 'storageMarketActor',
+  bafkqaftgnfwc6mjpozsxe2lgnfswi4tfm5uxg5dspe: 'verifiedRegistryActor',
+  bafkqadlgnfwc6mjpmfrwg33vnz2a: 'accountActor',
+  bafkqadtgnfwc6mjpnv2wy5djonuwo: 'multisigActor',
+  bafkqafdgnfwc6mjpobqxs3lfnz2gg2dbnzxgk3a: 'paymentChannelActor',
+  bafkqaetgnfwc6mjpon2g64tbm5sw22lomvza: 'storageMinerActor',
+  // v2:
+  bafkqaddgnfwc6mrpon4xg5dfnu: 'systemActor',
+  bafkqactgnfwc6mrpnfxgs5a: 'initActor',
+  bafkqaddgnfwc6mrpojsxoylsmq: 'rewardActorV2',
+  bafkqactgnfwc6mrpmnzg63q: 'cronActor',
+  bafkqaetgnfwc6mrpon2g64tbm5sxa33xmvza: 'storagePowerActorV2',
+  bafkqae3gnfwc6mrpon2g64tbm5sw2ylsnnsxi: 'storageMarketActorV2',
+  bafkqaftgnfwc6mrpozsxe2lgnfswi4tfm5uxg5dspe: 'verifiedRegistryActor',
+  bafkqadlgnfwc6mrpmfrwg33vnz2a: 'accountActor',
+  bafkqadtgnfwc6mrpnv2wy5djonuwo: 'multisigActor',
+  bafkqafdgnfwc6mrpobqxs3lfnz2gg2dbnzxgk3a: 'paymentChannelActor',
+  bafkqaetgnfwc6mrpon2g64tbm5sw22lomvza: 'storageMinerActorV2'
+}
+
 const partitionSchema = height => {
   if (!height || height >= 138720) {
     return {
@@ -310,6 +336,12 @@ export default class Filecoin {
     }
   }
 
+  async fetchActor (hash, head) {
+    const actor = await this.client.StateGetActor(hash, head.Cids)
+    actor.type = codeMap[actor.Code['/']]
+    return actor
+  }
+
   async fetchDeposits (hash, head) {
     const state = await this.client.StateReadState(hash, head.Cids)
     const { State, Balance } = state
@@ -463,6 +495,37 @@ export default class Filecoin {
       })
   }
 
+  async updateMinerMarketInfo (
+    minersInfo,
+    minerId,
+    setMinersIfMounted,
+    head,
+    filter = { deadlines: true }
+  ) {
+    const minerInfo = minersInfo[minerId]
+    delete minerInfo.ask
+
+    // setMinersIfMounted({ ...minersInfo, [minerId]: { ...minerInfo } })
+
+    this.fetchMinerInfo(minerId, head)
+      .then(info => {
+        const def = new Promise(resolve =>
+          setTimeout(() => {
+            resolve({ Error: true })
+          }, 2000)
+        )
+        const query = this.client.ClientQueryAsk(info.PeerId, minerId)
+
+        Promise.any([def, query]).then(ask => {
+          minerInfo.ask = ask
+          setMinersIfMounted({ ...minersInfo, [minerId]: { ...minerInfo } })
+        })
+      })
+      .catch(e => {
+        console.error('failed to fetch miner info')
+      })
+  }
+
   async fetchPreCommittedSectors (hash, head) {
     const node = head.Height >= 138720 ? `@Ha:${hash}/1/6` : `@Ha:${hash}/1/5`
     const preCommittedSectors = await this.getData(head, node, preCommitSchema)
@@ -547,13 +610,14 @@ export default class Filecoin {
   }
 
   async fetchGenesisActors (head) {
-    const [Supply, Reward, Power] = await Promise.all([
+    const [Supply, Reward, Power, Market] = await Promise.all([
       this.client.StateCirculatingSupply(head.Cids),
       this.client.StateReadState('f02', head.Cids),
-      this.client.StateReadState('f04', head.Cids)
+      this.client.StateReadState('f04', head.Cids),
+      this.client.StateReadState('f05', head.Cids)
     ])
 
-    return { Supply, Reward, Power }
+    return { Supply, Reward, Power, Market }
   }
 
   computeEconomics (

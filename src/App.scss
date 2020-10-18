@@ -313,6 +313,9 @@ h3 {
   background: #c00;
   border-radius: 10px;
   padding: 5px 10px;
+  &.rekt-miner {
+    background: #007bff;
+  }
 }
 .minerbar .rekt {
   font-size: 0.7em;

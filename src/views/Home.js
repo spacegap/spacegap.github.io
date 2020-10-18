@@ -63,7 +63,7 @@ function Home ({ miners, client, actors, head }) {
 
   const handleSearch = e => {
     if (e.key === 'Enter') {
-      window.location.href = `/#/miners/${e.target.value}`
+      window.location.href = `/#/address/${e.target.value}`
     }
   }
 
@@ -182,7 +182,11 @@ function Home ({ miners, client, actors, head }) {
 
       <div className='section'>
         <h3>Gas</h3>
-        See <Link to='/gas'> here </Link> for a detailed gas analysis.
+        See <Link to='/gas'> Gas </Link> for a detailed gas analysis.
+      </div>
+      <div className='section'>
+        <h3>Market</h3>
+        See <Link to='/market'> Market </Link>.
       </div>
       <div className='section'>
         <h3>Top miners</h3>
