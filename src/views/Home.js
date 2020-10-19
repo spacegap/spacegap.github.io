@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { withRouter } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import Summary from '../components/Summary'
-import Spacegap from '../components/Spacegap'
 import FilToken from '../components/FilToken'
 
 const d3 = require('d3')
@@ -12,6 +11,8 @@ const f3 = d3.format(',.3f')
 const f1 = d3.format(',.1f')
 
 function Home ({ miners, client, actors, head }) {
+  const [actors24, setActors24] = useState()
+
   const econSummary =
     actors &&
     client.computeEconomics(head, actors, {
@@ -23,6 +24,18 @@ function Home ({ miners, client, actors, head }) {
   const ProveCommitGasAvg = 47835932
 
   const [minersInfo, setMinersInfo] = useState({})
+
+  useEffect(() => {
+    if (!head) return
+    const fetchingActors24 = async () => {
+      const height = head.Height - 2880
+      const head24 = await client.fetchTipsetHead(height)
+      const actors24 = await client.fetchGenesisActors(head24)
+      setActors24(actors24)
+    }
+
+    fetchingActors24()
+  }, [client, head])
 
   useEffect(() => {
     if (!miners) {
@@ -69,7 +82,6 @@ function Home ({ miners, client, actors, head }) {
 
   return (
     <section id='home' className='container'>
-      <Spacegap />
       <div className='section'>
         <div class='search-bar'>
           <input
@@ -92,6 +104,18 @@ function Home ({ miners, client, actors, head }) {
               )
             }
             desc='Circulating Supply'
+          />
+          <Summary
+            title={
+              actors &&
+              actors24 && (
+                <>
+                  +{f0((+actors.Supply - +actors24.Supply) / 1e18 || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='24h new liquidity'
           />
           <Summary
             title={

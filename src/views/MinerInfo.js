@@ -215,17 +215,16 @@ function MinerInfo ({ client, miners, head, actors }) {
               sectorProjectedReward && (
                 <>
                   {f2(
+                    // 1.0 /
                     5 *
                       2880 *
                       ((miner.deadlines.ActiveCount * 32) /
-                        (+actors.Power.State.TotalBytesCommitted / 2 ** 30)) *
-                      100
+                        (+actors.Power.State.TotalBytesCommitted / 2 ** 30))
                   )}
-                  %
                 </>
               )
             }
-            desc='Daily block prob'
+            desc='Daily Blocks*'
           />
         </div>
         (*) These numbers are projections and do not take into account several

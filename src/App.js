@@ -13,6 +13,7 @@ import AccountInfo from './views/AccountInfo'
 import AddressInfo from './views/AddressInfo'
 import TinySummary from './components/TinySummary'
 import Gas from './views/Gas'
+import Spacegap from './components/Spacegap'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min'
@@ -122,6 +123,7 @@ function App () {
           </Link>
         </header>
         <div className='container'>
+          <Spacegap />
           <Switch>
             <Route path='/miners/:minerId/deadlines/:deadlineId'>
               <Deadline client={client} miners={miners} head={head} />
