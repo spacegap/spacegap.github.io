@@ -365,7 +365,7 @@ export default class Filecoin {
       return JSON.parse(cached)
 
     const json = await (
-      await fetch('https://filfox.info/api/v1/miner/top-miners/power?count=20')
+      await fetch('https://filfox.info/api/v1/miner/top-miners/power?count=30')
     ).json()
     const miners = json.miners.reduce((acc, curr) => {
       acc[curr.address] = curr

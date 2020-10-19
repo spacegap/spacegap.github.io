@@ -117,17 +117,6 @@ function Home ({ miners, client, actors, head }) {
             }
             desc='24h new liquidity'
           />
-          <Summary
-            title={
-              actors && (
-                <>
-                  {f3(+actors.Reward.State.ThisEpochReward / 5 / 1e18 || 0)}
-                  <FilToken />
-                </>
-              )
-            }
-            desc='Block Reward'
-          />
           {/* <Summary
               title={`${f0(+actors.Supply.FilBurnt / 1e18 || 0)} FIL`}
               desc='Burnt'
@@ -145,7 +134,7 @@ function Home ({ miners, client, actors, head }) {
           <Summary
             title={
               actors &&
-              `${f0(
+              `${f1(
                 +actors.Power.State.TotalBytesCommitted / 2 ** 50 || 0
               )} PiB`
             }
@@ -198,6 +187,30 @@ function Home ({ miners, client, actors, head }) {
                 </>
               )
             }
+          />
+        </div>
+        <div class='grid'>
+          <Summary
+            title={
+              actors && (
+                <>
+                  {f3(+actors.Reward.State.ThisEpochReward / 5 / 1e18 || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='Block Reward'
+          />
+          <Summary
+            title={
+              econSummary && (
+                <>
+                  {f3((+econSummary.sectorProjectedReward1 * 1024) / 32)}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='1-day FIL/TiB Reward'
           />
         </div>
         These numbers are approximate projections based on the current network
