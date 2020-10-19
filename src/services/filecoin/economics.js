@@ -105,11 +105,13 @@ export default class Comp {
       this.currEpoch
     )
     const sectorProjectedReward = this.projectFutureReward(32 * 2 ** 30, 360)
+    const sectorProjectedReward1 = this.projectFutureReward(32 * 2 ** 30, 1)
     const sectorFaultFee = this.projectFutureReward(32 * 2 ** 30, 3.51)
 
     return {
       sectorIp,
       sectorProjectedReward,
+      sectorProjectedReward1,
       sectorFaultFee
     }
   }

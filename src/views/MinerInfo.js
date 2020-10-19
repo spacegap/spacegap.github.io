@@ -9,7 +9,8 @@ import FilToken from '../components/FilToken'
 
 const d3 = require('d3')
 const f = d3.format(',')
-const f2 = d3.format(',.0f')
+const f0 = d3.format(',.0f')
+const f2 = d3.format(',.2f')
 
 function MinerInfo ({ client, miners, head, actors }) {
   const { minerId } = useParams()
@@ -20,6 +21,12 @@ function MinerInfo ({ client, miners, head, actors }) {
     client.computeEconomics(head, actors, {
       projectedDays: 1
     }).sectorFaultFee
+
+  const sectorProjectedReward1 =
+    actors && client.computeEconomics(head, actors, {}).sectorProjectedReward1
+
+  const sectorProjectedReward =
+    actors && client.computeEconomics(head, actors, {}).sectorProjectedReward
 
   // On new (hash or head): fetch miner
   useEffect(() => {
@@ -94,6 +101,42 @@ function MinerInfo ({ client, miners, head, actors }) {
         <div className='grid grid-4'>
           <Summary
             title={
+              miner.deadlines &&
+              `${f2((miner.deadlines.SectorsCount * 32) / 1024)} TiB`
+            }
+            desc={`${(miner.deadlines && f(miner.deadlines.SectorsCount)) ||
+              ''} Total Sectors`}
+          />
+
+          <Summary
+            title={
+              miner.deadlines &&
+              `${f2((miner.deadlines.ActiveCount * 32) / 1024)} TiB`
+            }
+            desc={`${(miner.deadlines && f(miner.deadlines.ActiveCount)) ||
+              ''} Active Sectors`}
+          />
+          <Summary
+            title={
+              miner.deadlines &&
+              `${f2((miner.deadlines.FaultsCount * 32) / 1024)} TiB`
+            }
+            desc={`${(miner.deadlines && f(miner.deadlines.FaultsCount)) ||
+              ''} Faulty Sectors`}
+          />
+
+          <Summary
+            title={(miner.preCommits && f(miner.preCommits.Count)) || ''}
+            desc='PreCommits'
+          />
+        </div>
+      </div>
+
+      <div id='sectors'>
+        <h3>Economics</h3>
+        <div className='grid grid-4'>
+          <Summary
+            title={
               miner.deposits && (
                 <>
                   {f(miner.deposits.InitialPledge || 0)}
@@ -140,41 +183,53 @@ function MinerInfo ({ client, miners, head, actors }) {
             desc='Faults to Debt'
           />
         </div>
-      </div>
-
-      <div id='sectors'>
-        <div className='grid grid-4'>
+        <div className='grid'>
           <Summary
             title={
               miner.deadlines &&
-              `${f2((miner.deadlines.SectorsCount * 32) / 1024)} TiB`
+              sectorProjectedReward1 && (
+                <>
+                  {f2(sectorProjectedReward1 * miner.deadlines.ActiveCount)}
+                  <FilToken />
+                </>
+              )
             }
-            desc={`${(miner.deadlines && f(miner.deadlines.SectorsCount)) ||
-              ''} Total Sectors`}
-          />
-
-          <Summary
-            title={
-              miner.deadlines &&
-              `${f2((miner.deadlines.ActiveCount * 32) / 1024)} TiB`
-            }
-            desc={`${(miner.deadlines && f(miner.deadlines.ActiveCount)) ||
-              ''} Active Sectors`}
+            desc='Daily reward*'
           />
           <Summary
             title={
               miner.deadlines &&
-              `${f2((miner.deadlines.FaultsCount * 32) / 1024)} TiB`
+              sectorProjectedReward && (
+                <>
+                  {f2(sectorProjectedReward * miner.deadlines.ActiveCount)}
+                  <FilToken />
+                </>
+              )
             }
-            desc={`${(miner.deadlines && f(miner.deadlines.FaultsCount)) ||
-              ''} Faulty Sectors`}
+            desc='360-Day reward*'
           />
-
           <Summary
-            title={(miner.preCommits && f(miner.preCommits.Count)) || ''}
-            desc='PreCommits'
+            title={
+              actors &&
+              miner.deadlines &&
+              sectorProjectedReward && (
+                <>
+                  {f2(
+                    5 *
+                      2880 *
+                      ((miner.deadlines.ActiveCount * 32) /
+                        (+actors.Power.State.TotalBytesCommitted / 2 ** 30)) *
+                      100
+                  )}
+                  %
+                </>
+              )
+            }
+            desc='Daily block prob'
           />
         </div>
+        (*) These numbers are projections and do not take into account several
+        factors like network growth. Do your own research.
       </div>
 
       {miner.deadlines && (
