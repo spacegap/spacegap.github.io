@@ -16,8 +16,10 @@ const BN = require('bn.js')
 const schema = require('@filecoin-shipyard/lotus-client-schema').testnet
   .fullNode
 
+const BigInt = window.BigInt || window.parseInt
+
 function b64ToBn (b64) {
-  if (b64 === '') return window.BigInt(0)
+  if (b64 === '') return BigInt(0)
   var bin = atob(b64)
   var hex = []
 
@@ -29,7 +31,7 @@ function b64ToBn (b64) {
     hex.push(h)
   })
 
-  return window.BigInt('0x' + hex.join(''))
+  return BigInt('0x' + hex.join(''))
 }
 
 const codeMap = {
@@ -130,13 +132,12 @@ const preCommitSchema = {
     verified_deal_weight: 'bigint'
   }
 }
-const BigInt = window.BigInt
 
 function bytesToBig (p) {
   let acc = BigInt(0)
   for (let i = 0; i < p.length; i++) {
     acc *= BigInt(256)
-    acc += window.BigInt(p[i])
+    acc += BigInt(p[i])
   }
   return acc
 }
@@ -457,7 +458,8 @@ export default class Filecoin {
         console.error('failed to fetch miner info')
       })
 
-    if (filter.deadlines)
+    if (filter.deadlines) {
+      console.log('fff fetching deadline', minerId, head)
       this.fetchDeadlines(minerId, head)
         .then(deadlines => {
           minerInfo.deadlines = deadlines
@@ -467,8 +469,9 @@ export default class Filecoin {
           })
         })
         .catch(e => {
-          console.error('failed to fetch deadlines')
+          console.error('failed to fetch deadlines', e)
         })
+    }
 
     this.fetchDeposits(minerId, head)
       .then(deposits => {
