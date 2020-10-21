@@ -6,13 +6,16 @@ export default function MinerBar ({
   miners,
   minerId,
   deadlineId,
-  miner
+  sectorId,
+  type,
+  miner,
+  sector
 }) {
   return (
     <div className='section minerbar'>
       {/* <div>{miner && miner.info && JSON.stringify(miner.info)}</div> */}
       <div className='minerId'>
-        {!deadlineId && (
+        {!type && (
           <>
             <Link to={`/address/${minerId}`}>{minerId}</Link>
             <span className='tinyarrow'>
@@ -24,7 +27,21 @@ export default function MinerBar ({
             )}
           </>
         )}
-        {deadlineId && (
+        {type === 'sector' && (
+          <>
+            <Link to={`/miners/${minerId}/sectors/${sectorId}`}>
+              Sector {sectorId}
+            </Link>
+            {sector === 'faulty' && <span className='rekt'>FAULTY</span>}
+            {sector === 'recovering' && (
+              <span className='rekt rekt-green'>RECOVERING</span>
+            )}
+            {sector === 'terminated' && (
+              <span className='rekt rekt-black'>TERMINATED</span>
+            )}
+          </>
+        )}
+        {type === 'deadline' && (
           <>
             <Link to={`/miners/${minerId}/deadlines/${deadlineId}`}>
               Deadline {deadlineId}
@@ -32,17 +49,23 @@ export default function MinerBar ({
           </>
         )}
       </div>
-      {deadlineId && (
+      {type && (
         <>
           <div className='backto'>
             <Link to={`/miners/${minerId}`}>
               See address
               <span className='bolder'> {minerId}</span>
             </Link>
+            {type === 'sector' && deadlineId !== undefined && (
+              <Link to={`/miners/${minerId}/deadlines/${deadlineId}`}>
+                See deadline
+                <span className='bolder'> {deadlineId}</span>
+              </Link>
+            )}
           </div>
         </>
       )}
-      {!deadlineId && (
+      {!type && (
         <div>
           {miners && miners[minerId] && miners[minerId].tag && (
             <span className='miner-name'>

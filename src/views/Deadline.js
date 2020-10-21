@@ -5,6 +5,7 @@ import WindowPoSt from '../components/WindowPoSt'
 import Summary from '../components/Summary'
 import asyncPool from 'tiny-async-pool'
 import MinerBar from '../components/MinerBar'
+import { Link } from 'react-router-dom'
 const d3 = require('d3')
 const f = d3.format(',')
 const f2 = d3.format(',.1f')
@@ -106,6 +107,7 @@ function Deadline ({ miners, client, head }) {
         miners={miners}
         minerId={minerId}
         deadlineId={deadlineId}
+        type='deadline'
       />
       <div className='section wpost'>
         <div className='grid'>
@@ -195,15 +197,17 @@ function Deadline ({ miners, client, head }) {
                 </h4>
                 <div className='s-partition'>
                   {partition[0].Sectors.map(sector => (
-                    <div
-                      key={sector}
-                      className={`s-sector ${partition[0].Faults[sector] &&
-                        'faulty'} ${partition[0].Terminated[sector] &&
-                        'terminated'} ${partition[0].Recoveries[sector] &&
-                        'recovering'}`}
-                    >
-                      <span>{sector}</span>
-                    </div>
+                    <Link to={`/miners/${minerId}/sectors/${sector}`}>
+                      <div
+                        key={sector}
+                        className={`s-sector ${partition[0].Faults[sector] &&
+                          'faulty'} ${partition[0].Terminated[sector] &&
+                          'terminated'} ${partition[0].Recoveries[sector] &&
+                          'recovering'}`}
+                      >
+                        <span>{sector}</span>
+                      </div>
+                    </Link>
                   ))}
                 </div>
               </div>

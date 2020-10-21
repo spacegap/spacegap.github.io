@@ -260,28 +260,32 @@ export default class Filecoin {
     return this.client.chainHead()
   }
 
-  // async fetchPartitionsSectors (head, miner, deadline) {
-  //   const partitions = await this.client.StateMinerPartitions(
-  //     miner,
-  //     deadline,
-  //     head.Cids
-  //   )
-  //   partitions.map(p => ({
-  //     Sectors: decodeRLE3(p.AllSectors),
-  //     Faults: decodeRLE3(p.FaultySectors).reduce((acc, curr) => {
-  //       acc[curr] = true
-  //       return acc
-  //     }, {}),
-  //     Recoveries: decodeRLE2(p.RecoveringSectors).reduce((acc, curr) => {
-  //       acc[curr] = true
-  //       return acc
-  //     }, {}),
-  //     Active: decodeRLE2(p.ActiveSectors).reduce((acc, curr) => {
-  //       acc[curr] = true
-  //       return acc
-  //     }, {})
-  //   }))
-  // }
+  async fetchPartitionsSectorsState (head, miner, deadline) {
+    const partitions = await this.client.StateMinerPartitions(
+      miner,
+      deadline,
+      head.Cids
+    )
+    return partitions.map(p => ({
+      Sectors: decodeRLE3(p.AllSectors),
+      Faults: decodeRLE3(p.FaultySectors).reduce((acc, curr) => {
+        acc[curr] = true
+        return acc
+      }, {}),
+      Recoveries: decodeRLE3(p.RecoveringSectors).reduce((acc, curr) => {
+        acc[curr] = true
+        return acc
+      }, {}),
+      Active: decodeRLE3(p.ActiveSectors).reduce((acc, curr) => {
+        acc[curr] = true
+        return acc
+      }, {}),
+      Live: decodeRLE3(p.LiveSectors).reduce((acc, curr) => {
+        acc[curr] = true
+        return acc
+      }, {})
+    }))
+  }
 
   async fetchPartitionsSectors (cid, height) {
     const node = (await this.client.chainGetNode(`${cid['/']}`)).Obj[2][2]
