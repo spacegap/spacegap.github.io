@@ -8,7 +8,6 @@
     "@filecoin-shipyard/lotus-client-provider-browser": "0.0.14",
     "@filecoin-shipyard/lotus-client-rpc": "0.0.11",
     "@filecoin-shipyard/lotus-client-schema": "0.0.14",
-    "@nicola/fake-transparency-for-3d-surfaces": "https://api.observablehq.com/@nicola/fake-transparency-for-3d-surfaces.tgz?v=3",
     "@observablehq/runtime": "4",
     "@open-wc/webpack-import-meta-loader": "^0.4.7",
     "@testing-library/jest-dom": "^4.2.4",
