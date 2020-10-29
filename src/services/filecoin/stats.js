@@ -169,6 +169,9 @@ export default class Stats {
   async avgValue(cb, ...method) {
     var avg = 0;
     await this.msgsPerHeight((msgs) => {
+        if (msgs.length < 1) {
+            return
+        }
       avg += msgs.reduce((acc,m) => acc + cb(m), 0) / msgs.length
     },...method)
     return avg / Object.keys(this.tipsets).length

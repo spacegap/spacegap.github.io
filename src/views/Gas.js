@@ -209,7 +209,7 @@ function MinerInfoCard ({ nstats }) {
   ]
 
   const [minerAddr, setAddr] = useState('')
-  const [data, setData] = useState({})
+  const [data, setData] = useState({raw:0,ratio:0,size:0,dailyGas:0,maxDailyPrice:0})
 
   const drawHeaders = v => v.map(h => <th key={h}> {h} </th>)
   const searchMiner = async e => {
@@ -246,7 +246,7 @@ function MinerInfoCard ({ nstats }) {
             <div className='col-4'> </div>
             <form>
               <div className='form-group'>
-                <label for='minerAddress'>Miner address</label>
+                <label htmlFor='minerAddress'>Miner address</label>
                 <input
                   value={minerAddr}
                   onChange={e => setAddr(e.target.value)}
