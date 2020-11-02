@@ -105,26 +105,77 @@ function Home ({ miners, client, actors, head }) {
             }
             desc='Circulating Supply'
           />
+
+          <Summary
+            title={
+              actors && (
+                <>
+                  {f0(+actors.SupplyVM.FilBurnt / 1e18 || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='Burnt'
+          />
+
+          <Summary
+            title={
+              actors && (
+                <>
+                  {f0(+actors.SupplyVM.FilLocked / 1e18 || 0)}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='Locked'
+          />
+        </div>
+        <div className='grid'>
           <Summary
             title={
               actors &&
               actors24 && (
                 <>
-                  +{f0((+actors.Supply - +actors24.Supply) / 1e18 || 0)}
+                  {f0((+actors.Supply - +actors24.Supply) / 1e18 || 0)}
                   <FilToken />
                 </>
               )
             }
-            desc='24h new liquidity'
+            desc='24h new supply'
           />
-          {/* <Summary
-              title={`${f0(+actors.Supply.FilBurnt / 1e18 || 0)} FIL`}
-              desc='Burnt'
-            />
-            <Summary
-              desc='Locked'
-              title={`${f0(+actors.Supply.FilLocked / 1e18 || 0)} FIL`}
-            /> */}
+
+          <Summary
+            title={
+              actors &&
+              actors24 && (
+                <>
+                  {f0(
+                    (+actors.SupplyVM.FilBurnt - +actors24.SupplyVM.FilBurnt) /
+                      1e18 || 0
+                  )}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='24h new Burnt'
+          />
+
+          <Summary
+            title={
+              actors &&
+              actors24 && (
+                <>
+                  {f0(
+                    (+actors.SupplyVM.FilLocked -
+                      +actors24.SupplyVM.FilLocked) /
+                      1e18 || 0
+                  )}
+                  <FilToken />
+                </>
+              )
+            }
+            desc='Locked'
+          />
         </div>
       </div>
 
@@ -139,6 +190,18 @@ function Home ({ miners, client, actors, head }) {
               )} PiB`
             }
             desc='Network Raw'
+          />
+          <Summary
+            title={
+              actors &&
+              actors24 &&
+              `+${f1(
+                (+actors.Power.State.TotalBytesCommitted -
+                  +actors24.Power.State.TotalBytesCommitted) /
+                  2 ** 50 || 0
+              )} PiB`
+            }
+            desc='24h new storage'
           />
           <Summary
             desc='Active Miners'
