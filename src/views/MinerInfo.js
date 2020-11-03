@@ -241,7 +241,7 @@ function MinerInfo ({ client, miners, head, actors }) {
               </a>
               <ReactTooltip id='wpost-desc' effect='solid' place='top'>
                 <span>
-                  List of 48 WindoPoSt submission deadlines ordered by due time
+                  List of 48 WindowPoSt submission deadlines ordered by due time
                   (in epochs).
                   <br />
                   Bars represent ~8TB disks to be proven, white are healthy
