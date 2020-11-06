@@ -13,7 +13,7 @@ const BASE64 =
 const b64 = bx(BASE64)
 const BN = require('bn.js')
 
-const schema = require('@filecoin-shipyard/lotus-client-schema').testnet
+const schema = require('@filecoin-shipyard/lotus-client-schema').mainnet
   .fullNode
 
 const BigInt = window.BigInt || window.parseInt
@@ -617,14 +617,16 @@ export default class Filecoin {
   }
 
   async fetchGenesisActors (head) {
-    const [Supply, Reward, Power, Market] = await Promise.all([
+    const [Supply, Reward, Power, Market, Burnt, SupplyVM] = await Promise.all([
       this.client.StateCirculatingSupply(head.Cids),
       this.client.StateReadState('f02', head.Cids),
       this.client.StateReadState('f04', head.Cids),
-      this.client.StateReadState('f05', head.Cids)
+      this.client.StateReadState('f05', head.Cids),
+      this.client.StateReadState('f099', head.Cids),
+      this.client.StateVMCirculatingSupplyInternal(head.Cids)
     ])
 
-    return { Supply, Reward, Power, Market }
+    return { Supply, Reward, Power, Market, Burnt, SupplyVM }
   }
 
   computeEconomics (
