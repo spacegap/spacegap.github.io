@@ -5,7 +5,10 @@ import Stats, {
   objectMap,
   objectFilter,
   growthRate,
-  wpostToSectors
+  wpostToSectors,
+  msgToGasUsed,
+  msgToGasLimit,
+  msgToGasFeeCap,
 } from '../services/filecoin/stats'
 
 // number of consecutive block we take the average from
@@ -206,7 +209,7 @@ function MinerInfoCard ({ nstats }) {
   ]
 
   const [minerAddr, setAddr] = useState('')
-  const [data, setData] = useState({})
+  const [data, setData] = useState({raw:0,ratio:0,size:0,dailyGas:0,maxDailyPrice:0})
 
   const drawHeaders = v => v.map(h => <th key={h}> {h} </th>)
   const searchMiner = async e => {
@@ -243,7 +246,7 @@ function MinerInfoCard ({ nstats }) {
             <div className='col-4'> </div>
             <form>
               <div className='form-group'>
-                <label for='minerAddress'>Miner address</label>
+                <label htmlFor='minerAddress'>Miner address</label>
                 <input
                   value={minerAddr}
                   onChange={e => setAddr(e.target.value)}
@@ -413,16 +416,19 @@ function GasTableCard ({ nstats, head }) {
   })
 
   const updateAverage = async nstats => {
-    const totalGasUsed = await nstats.avgTotalGasUsed()
-    const totalGasLimit = await nstats.avgGasLimit()
+    const totalUsed = await nstats.avgTotal(msgToGasUsed)
+    const totalLimit = await nstats.avgTotal(msgToGasLimit)
 
     const computeEntry = async (...method) => {
       const nTx = await nstats.avgNumberTx(...method)
-      const gasUsed = await nstats.avgGasOfMethod(...method)
-      const gasLimit = await nstats.avgGasLimit(...method)
-      const ratioUsed = await nstats.avgRatioUsedOverTotalUsed(...method)
-      const ratioLimit = await nstats.avgRatioLimitOverTotalLimit(...method)
-      const ratioUsedLimit = await nstats.avgRatioUsedOverLimit(...method)
+      const gasUsed = await nstats.avgValue(msgToGasUsed,...method)
+      const gasLimit = await nstats.avgValue(msgToGasLimit,...method)
+      // total gas used for this method in average per epoch
+      const mtotalUsed = await nstats.avgTotal(msgToGasUsed, ...method)
+      const mtotalLimit = await nstats.avgTotal(msgToGasLimit, ...method)
+      const ratioUsed = mtotalUsed / totalUsed
+      const ratioLimit = mtotalLimit / totalLimit
+      const ratioUsedLimit = mtotalUsed / mtotalLimit
       const ratioUsedBlockLimit = await nstats.avgTotalGasUsedOverTipsetLimit(
         ...method
       )
@@ -493,7 +499,7 @@ function GasTableCard ({ nstats, head }) {
                     <tr>{drawHeaders(avgGas.headers)}</tr>
                   </thead>
                   <tbody>
-                    <RowInfo name='Total gas used:' values={avgGas.total} />
+                    <RowInfo name='All transactions:' values={avgGas.total} />
                     <RowInfo name='WindowPoSt:' values={avgGas.wpost} />
                     <RowInfo name='PreCommit:' values={avgGas.pre} />
                     <RowInfo name='ProveCommit:' values={avgGas.prove} />
@@ -515,7 +521,7 @@ function GasTableCard ({ nstats, head }) {
                   </li>
                   <li className='list-group-item'>
                     <b>Ratio over total GasUsed:</b> Precedent number divided by
-                    the total gas used accross all epochs
+                    the total gas used in avg per epoch
                   </li>
                   <li className='list-group-item'>
                     <b>Average GasLimit:</b> gas limit set per transaction of
@@ -523,19 +529,20 @@ function GasTableCard ({ nstats, head }) {
                   </li>
                   <li className='list-group-item'>
                     <b>Ratio over total GasLimit:</b> Precedent number divided
-                    by the total gas used accross all epochs
+                    by the total gas limit in avg per epoch
                   </li>
                   <li className='list-group-item'>
                     <b>Ratio GasUsed over GasLimit:</b> Total gas used for the
-                    method over total gas limit set accross all epoch
+                    method over total gas limit in avg per epoch
                   </li>
                   <li className='list-group-item'>
                     <b>Total GasUsed over BlockLimit:</b> Total gas used divided
-                    by total gas limit set per epoch
+                    by total gas limit set per epoch computed with number of blocks
                   </li>
                   <li className='list-group-item'>
-                    <b>Total GasLimit over BlockLimit:</b> precedent number
-                    divided by total gas limit set per epoch
+                    <b>Total GasLimit over BlockLimit:</b> Total gas limit 
+                    divided by total gas limit set per epoch computed with number 
+                    of blocks per epoch
                   </li>
                 </ul>
               </div>

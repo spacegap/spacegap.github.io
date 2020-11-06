@@ -54,6 +54,16 @@ function attoToFIL (atto) {
   return atto * 10 ** -18
 }
 
+export function msgToGasUsed(m) {
+    return m[1].GasUsed
+}
+export function msgToGasLimit(m) {
+    return m[0].Message.GasLimit
+}
+export function msgToGasFeeCap(m) {
+    return m[0].Message.GasFeeCap
+}
+
 export default class Stats {
   constructor (client, average) {
     this.fetcher = client
@@ -89,46 +99,6 @@ export default class Stats {
     )
   }
 
-  // returns the average gas used of a given method
-  async avgGasOfMethod (...method) {
-    const msgs = await this.transactions(...method)
-    const totalGas = msgs.reduce((total, v) => total + v[1].GasUsed, 0)
-    return totalGas / msgs.length
-  }
-
-  // Return the average of the gas limit PER height
-  async avgGasLimit (...method) {
-    return (await this.transactions(...method)).reduce(
-      (acc, tup) => acc + tup[0].Message.GasLimit,
-      0
-    )
-  }
-
-  async avgGasFeeCap (...method) {
-    var avg = 0
-    for (var height in this.tipsets) {
-      const tipset = this.tipsets[height]
-      const msgs = await this.fetcher.parentAndReceiptsMessages(
-        tipset.Cids[0],
-        ...method
-      )
-      avg +=
-        msgs.reduce((total, v) => total + parseInt(v[0].Message.GasFeeCap), 0) /
-        msgs.length
-    }
-    return avg / Object.keys(this.tipsets).length
-  }
-
-  // Returns the average of the total gas used PER height
-  async avgTotalGasUsed (...method) {
-    const div = Object.keys(this.tipsets).length
-    const reduc = (await this.transactions(...method)).reduce(
-      (total, tup) => total + tup[1].GasUsed,
-      0
-    )
-    return reduc / div
-  }
-
   async avgNumberTx (...method) {
     const tx = await this.transactions(...method)
     return tx.length / Object.keys(this.tipsets).length
@@ -160,40 +130,13 @@ export default class Stats {
     return allTx
   }
 
-  async avgRatioUsedOverTotalUsed (...method) {
-    const gasUsedMethod = (await this.transactions(...method)).reduce(
-      (acc, v) => acc + v[1].GasUsed,
-      0
-    )
-    const totalUsed = (await this.transactions()).reduce(
-      (acc, v) => acc + v[1].GasUsed,
-      0
-    )
-    return gasUsedMethod / totalUsed
-  }
-
-  async avgRatioLimitOverTotalLimit (...method) {
-    const gasLimitMethod = (await this.transactions(...method)).reduce(
-      (acc, v) => acc + v[0].Message.GasLimit,
-      0
-    )
-    const totalLimit = (await this.transactions()).reduce(
-      (acc, v) => acc + v[0].Message.GasLimit,
-      0
-    )
-    return gasLimitMethod / totalLimit
-  }
 
   // return the avg total gas limit set per height for the given method over
   // the maximal theoretical gas limit
   async avgTotalGasLimitOverTipsetLimit (...method) {
     var ratios = []
-    for (var height in this.tipsets) {
+    await this.msgsPerHeight((msgs,height) => {
       const tipset = this.tipsets[height]
-      const msgs = await this.fetcher.parentAndReceiptsMessages(
-        tipset.Cids[0],
-        ...method
-      )
       const totalGasLimit = msgs.reduce(
         (total, tup) => total + tup[0].Message.GasLimit,
         0
@@ -201,42 +144,56 @@ export default class Stats {
       const nbBlocks = tipset.Cids.length
       const ratio = totalGasLimit / (blockLimit * nbBlocks)
       ratios.push(ratio)
-    }
+    },...method)
     // make the average
     return ratios.reduce((acc, v) => acc + v, 0) / ratios.length
   }
 
   async avgTotalGasUsedOverTipsetLimit (...method) {
     var ratios = []
-    for (var height in this.tipsets) {
-      const tipset = this.tipsets[height]
-      const msgs = await this.fetcher.parentAndReceiptsMessages(
-        tipset.Cids[0],
-        ...method
-      )
+    await this.msgsPerHeight((msgs,height) => {
       const totalGasUsed = msgs.reduce(
         (total, tup) => total + tup[1].GasUsed,
         0
       )
-      const nbBlocks = tipset.Cids.length
+      const nbBlocks = this.tipsets[height].Cids.length
       const ratio = totalGasUsed / (blockLimit * nbBlocks)
       ratios.push(ratio)
-    }
+    },...method)
     // make the average
     return ratios.reduce((acc, v) => acc + v, 0) / ratios.length
   }
 
-  async avgRatioUsedOverLimit (...method) {
-    const used = (await this.transactions(...method)).reduce(
-      (acc, v) => acc + v[1].GasUsed,
-      0
-    )
-    const limit = (await this.transactions(...method)).reduce(
-      (acc, v) => acc + v[0].Message.GasLimit,
-      0
-    )
-    return used / limit
+  // Returns the average value of the field returned by the callback accross all
+  // messages and all epochs
+  async avgValue(cb, ...method) {
+    var avg = 0;
+    await this.msgsPerHeight((msgs) => {
+        if (msgs.length < 1) {
+            return
+        }
+      avg += msgs.reduce((acc,m) => acc + cb(m), 0) / msgs.length
+    },...method)
+    return avg / Object.keys(this.tipsets).length
   }
+
+  // Returns the average total value returned by the callback _per epoch_
+  async avgTotal(cb, ...method) {
+    var avg = [];
+    await this.msgsPerHeight((msgs) => {
+      avg.push(msgs.reduce((acc,m) => acc + cb(m), 0)) 
+    },...method)
+    return avg.reduce((acc,v) => v,0) / avg.length
+  }
+
+  async msgsPerHeight(cb, ...method)  {
+    for (var height in this.tipsets) {
+      const tipset = this.tipsets[height]
+      const msgs = await this.fetcher.parentAndReceiptsMessages(tipset.Cids[0], ...method);
+      cb(msgs,height)
+    }
+  }
+
 
   async biggestGasUserFor (...methods) {
     var datas = {}
@@ -262,6 +219,7 @@ export default class Stats {
     return datas
   }
 
+  
   sortedHeights () {
     return Object.keys(this.tipsets).sort((a, b) => b - a)
   }
@@ -290,3 +248,5 @@ export default class Stats {
     }
   }
 }
+
+
