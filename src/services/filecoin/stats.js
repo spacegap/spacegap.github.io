@@ -1,4 +1,4 @@
-const blockLimit = 5 * 10 ** 9
+const blockLimit = 10 * 10 ** 9
 const roundsPerDay = 2 * 60 * 24
 const roundsInDeadline = 2 * 30
 const deadlines = 48
