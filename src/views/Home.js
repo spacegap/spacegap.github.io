@@ -3,6 +3,7 @@ import { withRouter } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import Summary from '../components/Summary'
 import FilToken from '../components/FilToken'
+import {getHomepage} from "../api";
 
 const d3 = require('d3')
 const f = d3.format(',')
@@ -11,68 +12,21 @@ const f3 = d3.format(',.3f')
 const f1 = d3.format(',.1f')
 
 function Home ({ miners, client, actors, head }) {
-  const [actors24, setActors24] = useState()
+  const [data, setData] = useState()
+  const [error, setError] = useState()
+  const [minersInfo, setMinersInfo] = useState({})
 
-  const econSummary =
-    actors &&
-    client.computeEconomics(head, actors, {
-      projectedDays: 1
+  useEffect(() => {
+    getHomepage((data) => {
+      setData(data)
+    }, (error) => {
+      setError(error)
     })
+  }, [])
 
   const WindowPoStGasAvg = 534297287
   const PreCommitGasAvg = 21701073
   const ProveCommitGasAvg = 47835932
-
-  const [minersInfo, setMinersInfo] = useState({})
-
-  useEffect(() => {
-    if (!head) return
-    const fetchingActors24 = async () => {
-      const height = head.Height - 2880
-      const head24 = await client.fetchTipsetHead(height)
-      const actors24 = await client.fetchGenesisActors(head24)
-      setActors24(actors24)
-    }
-
-    fetchingActors24()
-  }, [client, head])
-
-  useEffect(() => {
-    if (!miners) {
-      setMinersInfo({})
-      return
-    }
-    setMinersInfo(miners)
-  }, [miners])
-
-  let count = 0
-
-  useEffect(() => {
-    if (!client || !head || !miners || !actors) {
-      return
-    }
-
-    if (!minersInfo) {
-      setMinersInfo({})
-      return
-    }
-
-    console.log('reload miners list', count++)
-
-    let mounted = true
-    const setMinersIfMounted = info => {
-      if (mounted) setMinersInfo(info)
-    }
-
-    Object.keys(minersInfo).forEach(minerId => {
-      client.updateMinerInfo(minersInfo, minerId, setMinersIfMounted, head, {
-        deadlines: false
-      })
-    })
-    return () => {
-      mounted = false
-    }
-  }, [client, head, miners, actors])
 
   const handleSearch = e => {
     if (e.key === 'Enter') {
@@ -94,187 +48,35 @@ function Home ({ miners, client, actors, head }) {
       <div id='actors' className='section'>
         <h3>Tokens</h3>
         <div className='grid'>
-          <Summary
-            title={
-              actors && (
-                <>
-                  {f0(+actors.Supply / 1e18 || 0)}
-                  <FilToken />
-                </>
-              )
-            }
-            desc='Circulating Supply'
-          />
-
-          <Summary
-            title={
-              actors && (
-                <>
-                  {f0(+actors.SupplyVM.FilBurnt / 1e18 || 0)}
-                  <FilToken />
-                </>
-              )
-            }
-            desc='Burnt'
-          />
-
-          <Summary
-            title={
-              actors && (
-                <>
-                  {f0(+actors.SupplyVM.FilLocked / 1e18 || 0)}
-                  <FilToken />
-                </>
-              )
-            }
-            desc='Locked'
-          />
+          <Summary title={data && <>{f0(data.circulatingSupply)}<FilToken /></>} desc='Circulating Supply' />
+          <Summary title={data && <>{f0(data.burnt)}<FilToken /></>} desc='Burnt'/>
+          <Summary title={data && <>{f0(data.locked)}<FilToken /></>} desc='Locked'/>
         </div>
         <div className='grid'>
-          <Summary
-            title={
-              actors &&
-              actors24 && (
-                <>
-                  {f0((+actors.Supply - +actors24.Supply) / 1e18 || 0)}
-                  <FilToken />
-                </>
-              )
-            }
-            desc='24h new supply'
-          />
-
-          <Summary
-            title={
-              actors &&
-              actors24 && (
-                <>
-                  {f0(
-                    (+actors.SupplyVM.FilBurnt - +actors24.SupplyVM.FilBurnt) /
-                      1e18 || 0
-                  )}
-                  <FilToken />
-                </>
-              )
-            }
-            desc='24h new Burnt'
-          />
-
-          <Summary
-            title={
-              actors &&
-              actors24 && (
-                <>
-                  {f0(
-                    (+actors.SupplyVM.FilLocked -
-                      +actors24.SupplyVM.FilLocked) /
-                      1e18 || 0
-                  )}
-                  <FilToken />
-                </>
-              )
-            }
-            desc='Locked'
-          />
+          <Summary title={data && <>{f0(data.last24hNewSupply)}<FilToken /></>} desc='24h new supply' />
+          <Summary title={data && <>{f0(data.last24hNewBurnt)}<FilToken /></>} desc='24h new Burnt'/>
+          <Summary title={data && <>{f0(data.last24hLocked)}<FilToken /></>} desc='Locked'/>
         </div>
       </div>
-
       <div id='actors2' className='section'>
         <h3>Power</h3>
         <div className='grid'>
-          <Summary
-            title={
-              actors &&
-              `${f1(
-                +actors.Power.State.TotalBytesCommitted / 2 ** 50 || 0
-              )} PiB`
-            }
-            desc='Network Raw'
-          />
-          <Summary
-            title={
-              actors &&
-              actors24 &&
-              `+${f1(
-                (+actors.Power.State.TotalBytesCommitted -
-                  +actors24.Power.State.TotalBytesCommitted) /
-                  2 ** 50 || 0
-              )} PiB`
-            }
-            desc='24h new storage'
-          />
-          <Summary
-            desc='Active Miners'
-            title={
-              actors &&
-              `${f0(+actors.Power.State.MinerAboveMinPowerCount || 0)}`
-            }
-          />
+          <Summary title={data && `${f1(data.networkRaw)} PiB`} desc='Network Raw'/>
+          <Summary title={data && `${f1(data.last24hNewStorage)} PiB`} desc='24h new storage' />
+          <Summary title={data && data.activeMiners} desc='Active Miners'/>
         </div>
       </div>
 
       <div id='economics' className='section'>
         <h3>Economics</h3>
         <div className='grid'>
-          <Summary
-            title={
-              econSummary && (
-                <>
-                  {f3(econSummary.sectorIp || 0)}
-                  <FilToken />
-                </>
-              )
-            }
-            desc='Sector Pledge'
-          />
-
-          <Summary
-            title={
-              econSummary && (
-                <>
-                  {f3(econSummary.sectorProjectedReward || 0)}
-                  <FilToken />
-                </>
-              )
-            }
-            desc='Sector 360-Days Reward'
-          />
-
-          <Summary
-            desc='Sector Fault Fee'
-            title={
-              econSummary && (
-                <>
-                  {f3(econSummary.sectorFaultFee || 0)}
-                  <FilToken />
-                </>
-              )
-            }
-          />
+          <Summary title={data && <>{f3(data.sectorPledge)}<FilToken /></>} desc='Sector Pledge'/>
+          <Summary title={data && <>{f3(data.sector360daysReward || 0)}<FilToken /></>} desc='Sector 360-Days Reward'/>
+          <Summary title={data && <>{f3(data.sectorFaultFee || 0)}<FilToken /></>} desc='Sector Fault Fee' />
         </div>
         <div class='grid'>
-          <Summary
-            title={
-              actors && (
-                <>
-                  {f3(+actors.Reward.State.ThisEpochReward / 5 / 1e18 || 0)}
-                  <FilToken />
-                </>
-              )
-            }
-            desc='Block Reward'
-          />
-          <Summary
-            title={
-              econSummary && (
-                <>
-                  {f3((+econSummary.sectorProjectedReward1 * 1024) / 32)}
-                  <FilToken />
-                </>
-              )
-            }
-            desc='1-day FIL/TiB Reward'
-          />
+          <Summary title={data && <>{f3(data.blockReward)}<FilToken /></>} desc='Block Reward'/>
+          <Summary title={data && <>{f3(data.dayFilTiBReward)}<FilToken /></>} desc='1-day FIL/TiB Reward'/>
         </div>
         These numbers are approximate projections based on the current network
         state and may be incorrect, do your own research.
