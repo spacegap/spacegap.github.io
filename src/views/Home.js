@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, {useState, useEffect, useContext} from 'react'
 import { withRouter } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import Summary from '../components/Summary'
 import FilToken from '../components/FilToken'
-import {getHomepage} from "../api";
+import {DatastoreContext} from "../contexts/api";
 
 const d3 = require('d3')
 const f = d3.format(',')
@@ -12,21 +12,11 @@ const f3 = d3.format(',.3f')
 const f1 = d3.format(',.1f')
 
 function Home ({ miners, client, actors, head }) {
-  const [data, setData] = useState()
-  const [error, setError] = useState()
-  const [minersInfo, setMinersInfo] = useState({})
-
-  useEffect(() => {
-    getHomepage((data) => {
-      setData(data)
-    }, (error) => {
-      setError(error)
-    })
-  }, [])
-
   const WindowPoStGasAvg = 534297287
   const PreCommitGasAvg = 21701073
   const ProveCommitGasAvg = 47835932
+
+  const { data } = useContext(DatastoreContext)
 
   const handleSearch = e => {
     if (e.key === 'Enter') {
@@ -110,34 +100,30 @@ function Home ({ miners, client, actors, head }) {
               </tr>
             </thead>
             <tbody>
-              {minersInfo &&
-                miners &&
-                Object.keys(miners)
-                  // .slice(0, 5)
+              {data && data.miners &&
+                Object.keys(data.miners)
                   .map((d, i) => (
                     <tr key={i}>
                       <th scope='row'>{i + 1}</th>
                       <td align='right' className='minerAddress'>
-                        <Link to={`/miners/${miners[d].address}`}>
-                          {miners && miners[d] && miners[d].address}
+                        <Link to={`/miners/${data.miners[d].address}`}>
+                          {data.miners[d].address}
                         </Link>
                       </td>
                       <td align='right'>
-                        {f1(
-                          minersInfo[d] && +minersInfo[d].rawBytePower / 2 ** 50
-                        )}{' '}
+                        {data.miners[d].rawPower}
                         PiB
                       </td>
                       <td align='right'>
-                        {minersInfo[d] && minersInfo[d].preCommits ? (
-                          minersInfo[d].preCommits.Count
+                        {data.miners[d] ? (
+                          data.miners[d].preCommitsCount || 0
                         ) : (
                           <div className='gradient' />
                         )}
                       </td>
                       <td align='right'>
-                        {minersInfo[d] && minersInfo[d].deposits ? (
-                          `${minersInfo[d].deposits.Available} FIL`
+                        {data.miners[d].deposits ? (
+                          `${data.miners[d].deposits} FIL`
                         ) : (
                           <div className='gradient' />
                         )}

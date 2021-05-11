@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, {useState, useEffect, useContext} from 'react'
 import Drand from '../services/drand'
+import {DatastoreContext} from "../contexts/api";
 
 const d3 = require('d3')
 const f = d3.format(',')
@@ -12,7 +13,7 @@ function getFilecoinExpectedHeight () {
 export default function TinySummary ({ client, head }) {
   const [expected, setFilExpectedHeight] = useState(getFilecoinExpectedHeight())
   const [round, setRound] = useState()
-
+  const {data} = useContext(DatastoreContext)
   useEffect(() => {
     let mounted = true
 
@@ -53,8 +54,8 @@ export default function TinySummary ({ client, head }) {
         <div>
           Filecoin Status{' '}
           <span>
-            {head && expected && head.Height < expected
-              ? expected - head.Height === 1
+            {data && data.height < expected
+              ? expected - data.height === 1
                 ? 'behind'
                 : 'receiving'
               : 'ok'}
@@ -64,7 +65,7 @@ export default function TinySummary ({ client, head }) {
         <div className='tiny'>
           Current Tipset{' '}
           <a href={`https://filfox.info/en/tipset/${head && head.Height}`}>
-            {head && f(head.Height)}
+            {data && f(data.height)}
           </a>
         </div>
 

@@ -19,6 +19,7 @@ import Spacegap from './components/Spacegap'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min'
 import './App.scss'
+import {DatastoreProvider} from "./contexts/api";
 
 function App () {
   console.log('reloaded')
@@ -92,104 +93,87 @@ function App () {
   }, [client, head])
 
   return (
-    <Router>
-      <div className='App'>
-        <div className='container'>
-          {/* <div className='row'>
-            <div className='col'>
-              Connected to Filecoin Network via&nbsp;
-              <select onChange={e => setNode(e.target.value)} value={node}>
-                <option value='wss://lotus.jimpick.com/spacerace_api/0/node/rpc/v0'>
-                  Jim's node 0
-                </option>
-                <option value='wss://lotus.jimpick.com/spacerace_api/1/node/rpc/v0'>
-                  Jim's node 1
-                </option>
-                <option value='ws://www.border.ninja:12342/node/rpc/v0'>
-                  Border's node
-                </option>
-                <option value='wss://node.glif.io/space07/lotus/rpc/v0'>
-                  Glif's node
-                </option>
-              </select>
-            </div>
-          </div> */}
-          <TinySummary client={client} head={head} />
+    <DatastoreProvider>
+      <Router>
+        <div className='App'>
+          <div>
+            <TinySummary client={client} head={head} />
+          </div>
+          <header className='container-fluid'>
+            <Link to='/'>
+              <h1 id='logo' className='logo'>
+                <span>spacegap</span>
+              </h1>
+            </Link>
+          </header>
+          <div className='container'>
+            <Spacegap />
+            <Switch>
+              <Route path='/miners/:minerId/deadlines/:deadlineId'>
+                <Deadline client={client} miners={miners} head={head} />
+              </Route>
+              <Route path='/miners/:minerId/sectors/:sectorId'>
+                <Sector
+                  actors={actors}
+                  client={client}
+                  miners={miners}
+                  head={head}
+                />
+              </Route>
+              <Route path='/miners/:minerId'>
+                <MinerInfo
+                  actors={actors}
+                  client={client}
+                  miners={miners}
+                  head={head}
+                />
+              </Route>
+              <Route path='/address/:minerId'>
+                <AddressInfo
+                  actors={actors}
+                  client={client}
+                  miners={miners}
+                  head={head}
+                />
+              </Route>
+              <Route path='/accounts/:minerId'>
+                <AccountInfo
+                  actors={actors}
+                  client={client}
+                  miners={miners}
+                  head={head}
+                />
+              </Route>
+              <Route path='/full'>
+                <Full client={client} miners={miners} />
+              </Route>
+              <Route path='/status'>
+                <Status head={head} spa={spa} client={client} miners={miners} />
+              </Route>
+              <Route path='/gas'>
+                <Gas client={client} head={head} />
+              </Route>
+              <Route path='/market'>
+                <Market
+                  actors={actors}
+                  client={client}
+                  head={head}
+                  miners={miners}
+                />
+              </Route>
+              <Route path='/'>
+                <Home
+                  actors={actors}
+                  client={client}
+                  head={head}
+                  miners={miners}
+                />
+              </Route>
+            </Switch>
+          </div>
         </div>
-        <header className='container-fluid'>
-          <Link to='/'>
-            <h1 id='logo' className='logo'>
-              <span>spacegap</span>
-            </h1>
-          </Link>
-        </header>
-        <div className='container'>
-          <Spacegap />
-          <Switch>
-            <Route path='/miners/:minerId/deadlines/:deadlineId'>
-              <Deadline client={client} miners={miners} head={head} />
-            </Route>
-            <Route path='/miners/:minerId/sectors/:sectorId'>
-              <Sector
-                actors={actors}
-                client={client}
-                miners={miners}
-                head={head}
-              />
-            </Route>
-            <Route path='/miners/:minerId'>
-              <MinerInfo
-                actors={actors}
-                client={client}
-                miners={miners}
-                head={head}
-              />
-            </Route>
-            <Route path='/address/:minerId'>
-              <AddressInfo
-                actors={actors}
-                client={client}
-                miners={miners}
-                head={head}
-              />
-            </Route>
-            <Route path='/accounts/:minerId'>
-              <AccountInfo
-                actors={actors}
-                client={client}
-                miners={miners}
-                head={head}
-              />
-            </Route>
-            <Route path='/full'>
-              <Full client={client} miners={miners} />
-            </Route>
-            <Route path='/status'>
-              <Status head={head} spa={spa} client={client} miners={miners} />
-            </Route>
-            <Route path='/gas'>
-              <Gas client={client} head={head} />
-            </Route>
-            <Route path='/market'>
-              <Market
-                actors={actors}
-                client={client}
-                head={head}
-                miners={miners}
-              />
-            </Route>
-            <Route path='/'>
-              <Home
-                actors={actors}
-                client={client}
-                head={head}
-                miners={miners}
-              />
-            </Route>
-          </Switch>
-        </div>
-      </div>
-    </Router>
+      </Router>
+    </DatastoreProvider>
   )
 }
 
