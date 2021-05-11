@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useContext} from 'react'
 import { withRouter } from 'react-router-dom'
 import { Link } from 'react-router-dom'
+import filesize from 'filesize'
 import Summary from '../components/Summary'
 import FilToken from '../components/FilToken'
 import {DatastoreContext} from "../contexts/api";
@@ -111,8 +112,7 @@ function Home ({ miners, client, actors, head }) {
                         </Link>
                       </td>
                       <td align='right'>
-                        {data.miners[d].rawPower}
-                        PiB
+                        {filesize(data.miners[d].rawPower, { standard: "iec", round: 3 })}
                       </td>
                       <td align='right'>
                         {data.miners[d] ? (
