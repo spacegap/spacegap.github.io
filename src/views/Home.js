@@ -122,8 +122,8 @@ function Home ({ miners, client, actors, head }) {
                         )}
                       </td>
                       <td align='right'>
-                        {data.miners[d].deposits ? (
-                          `${data.miners[d].deposits} FIL`
+                        {data.miners[d].deposits?.available ? (
+                          `${data.miners[d].deposits.available} FIL`
                         ) : (
                           <div className='gradient' />
                         )}
