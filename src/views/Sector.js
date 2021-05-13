@@ -151,8 +151,6 @@ function Sector ({ miners, client, head }) {
   return (
     <section className='container'>
       <MinerBar
-        client={client}
-        miners={miners}
         type='sector'
         minerId={minerId}
         sectorId={sectorId}

@@ -103,8 +103,6 @@ function Deadline ({ miners, client, head }) {
   return (
     <section className='container'>
       <MinerBar
-        client={client}
-        miners={miners}
         minerId={minerId}
         deadlineId={deadlineId}
         type='deadline'

@@ -36,8 +36,6 @@ function AccountInfo ({ client, miners, head, actors }) {
   return (
     <section className='container'>
       <MinerBar
-        client={client}
-        miners={miners}
         minerId={minerId}
         miner={miner}
       />

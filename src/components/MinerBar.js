@@ -4,8 +4,6 @@ import {emoji} from "../emoji";
 
 export default function MinerBar (
   {
-    client,
-    miners,
     minerId,
     deadlineId,
     sectorId,

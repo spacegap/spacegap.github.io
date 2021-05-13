@@ -62,7 +62,7 @@ function Home ({ miners, client, actors, head }) {
         <h3>Economics</h3>
         <div className='grid'>
           <Summary title={data && <>{f3(data.sectorPledge)}<FilToken /></>} desc='Sector Pledge'/>
-          <Summary title={data && <>{f3(data.sector360daysReward || 0)}<FilToken /></>} desc='Sector 360-Days Reward'/>
+          <Summary title={data && <>{f3(data.sectorProjectedReward || 0)}<FilToken /></>} desc='Sector 360-Days Reward'/>
           <Summary title={data && <>{f3(data.sectorFaultFee || 0)}<FilToken /></>} desc='Sector Fault Fee' />
         </div>
         <div class='grid'>
