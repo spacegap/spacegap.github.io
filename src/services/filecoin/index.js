@@ -57,7 +57,10 @@ const codeMap = {
   bafkqadlgnfwc6mrpmfrwg33vnz2a: 'accountActor',
   bafkqadtgnfwc6mrpnv2wy5djonuwo: 'multisigActor',
   bafkqafdgnfwc6mrpobqxs3lfnz2gg2dbnzxgk3a: 'paymentChannelActor',
-  bafkqaetgnfwc6mrpon2g64tbm5sw22lomvza: 'storageMinerActorV2'
+  bafkqaetgnfwc6mrpon2g64tbm5sw22lomvza: 'storageMinerActorV2',
+
+  // v3
+  bafkqaetgnfwc6nbpon2g64tbm5sw22lomvza: 'storageMinerActorV3',
 }
 
 const partitionSchema = height => {

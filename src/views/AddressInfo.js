@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, withRouter } from 'react-router-dom'
-
-import MinerInfo from './MinerInfo'
-import { Redirect } from 'react-router-dom'
+import { useParams, withRouter, Redirect } from 'react-router-dom'
 
 const d3 = require('d3')
 const f = d3.format(',')
 const f2 = d3.format(',.0f')
 
-function AddressInfo ({ client, miners, head, actors }) {
+function AddressInfo ({ client, head }) {
   const { minerId } = useParams()
   const [actorType, setActorType] = useState()
 
@@ -30,10 +27,9 @@ function AddressInfo ({ client, miners, head, actors }) {
 
   return (
     <>
-      {actorType === 'storageMinerActorV2' && (
+      {actorType?.includes("storageMinerActor") && (
         <Redirect to={`/miners/${minerId}`} />
       )}
-      {/* {actorType === 'accountActor' && <Redirect to={`/accounts/${minerId}`} />} */}
       {actorType === 'NotSupported' && <>Actor type not supported</>}
     </>
   )
