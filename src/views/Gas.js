@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, {useState, useEffect, useRef, useContext} from 'react'
 import { withRouter } from 'react-router-dom'
 import Chart from 'chart.js'
 import Stats, {
@@ -10,6 +10,7 @@ import Stats, {
   msgToGasLimit,
   msgToGasFeeCap,
 } from '../services/filecoin/stats'
+import {DatastoreContext} from "../contexts/api";
 
 // number of consecutive block we take the average from
 const averageLength = 3
@@ -42,13 +43,10 @@ function Gas ({ client, head }) {
 }
 
 function GrowthCard ({ nstats, head }) {
-  const [commits, setCommits] = useState({})
-  const [wposts, setWposts] = useState({})
   const [graph, setGraph] = useState(undefined)
-  const maxRounds = 30
   const canvasRef = useRef(null)
   const cardRef = useRef(null)
-
+  const { data } = useContext(DatastoreContext)
   const setCollapseEvent = g => {
     cardRef.current.addEventListener('show.bs.collapse', function () {
       g.update()
@@ -58,6 +56,7 @@ function GrowthCard ({ nstats, head }) {
     })
   }
 
+  const { dataCommits, dataWposts, rounds } = data.gas.growth;
   const options = {
     title: {
       display: true,
@@ -88,39 +87,6 @@ function GrowthCard ({ nstats, head }) {
   }
 
   const fillDataset = async () => {
-    const allSealed = await nstats.transactionsPerHeight(7)
-    const allProven = await nstats.transactionsPerHeight(5)
-    // convert those to only the number of transactions per height
-    const sealed = Object.fromEntries(
-      objectMap(allSealed, (v, k) => [k, v.length])
-    )
-    const proven = Object.fromEntries(
-      objectMap(allProven, (v, k) => [k, v.length])
-    )
-    // merge what we have with potentially new stuff - overwrite old data
-    // with new data if same height
-    const newCommits = { ...commits, ...sealed }
-    const newWposts = { ...wposts, ...proven }
-    // sort in decreasing order, take some of it then show it in reverse
-    // order
-    const rounds = objectMap(newCommits, (v, k) => k)
-      .sort((a, b) => b - a)
-      .slice(0, maxRounds)
-      .reverse()
-    // filter only rounds selected and convert to growth rate
-    const filteredCommits = objectFilter(newCommits, (v, k) =>
-      rounds.includes(k)
-    )
-    setCommits(filteredCommits)
-    const dataCommits = rounds
-      .map(r => filteredCommits[r])
-      .map(c => Math.round(growthRate(c)))
-    // filter only rounds selected and convert to number of sectors
-    const filteredPosts = objectFilter(newWposts, (v, k) => rounds.includes(k))
-    setWposts(filteredPosts)
-    const dataWposts = rounds
-      .map(r => filteredPosts[r])
-      .map(w => Math.round(wpostToSectors(w)))
     var myGraph = graph
     if (myGraph == undefined) {
       const dataset = [
@@ -162,7 +128,7 @@ function GrowthCard ({ nstats, head }) {
 
   useEffect(() => {
     fillDataset()
-  }, [head, nstats])
+  }, [data])
 
   return (
     <div className='card'>
