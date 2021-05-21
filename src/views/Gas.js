@@ -3,12 +3,8 @@ import { withRouter } from 'react-router-dom'
 import Chart from 'chart.js'
 import Stats, {
   objectMap,
-  objectFilter,
-  growthRate,
-  wpostToSectors,
   msgToGasUsed,
   msgToGasLimit,
-  msgToGasFeeCap,
 } from '../services/filecoin/stats'
 import {DatastoreContext} from "../contexts/api";
 
@@ -255,14 +251,13 @@ function MinerInfoCard ({ nstats }) {
   )
 }
 
-function BiggestGasSpenderCard ({ head, nstats }) {
-  const [dataset, setData] = useState({})
-  const [opts, setOpts] = useState({})
+function BiggestGasSpenderCard () {
   const [pie, setPie] = useState(undefined)
-  const maxUser = 10
   const canvasRef = useRef(null)
   const cardRef = useRef(null)
-
+  const { data } = useContext(DatastoreContext)
+  const { biggestUsers } = data.gas;
+  const { height, data: biggestUsersData } = biggestUsers;
   const setCollapseEvent = pie => {
     cardRef.current.addEventListener('show.bs.collapse', function () {
       pie.update()
@@ -273,36 +268,28 @@ function BiggestGasSpenderCard ({ head, nstats }) {
   }
 
   const fillDataset = async () => {
-    const allHeights = await nstats.biggestGasUserFor()
-    if (Object.keys(allHeights).length < 1) {
-      return
-    }
-    const sortedHeight = Object.keys(allHeights).sort((a, b) => b - a)
-    const data = allHeights[sortedHeight[0]]
-    const rawData = data.slice(0, maxUser).map(d => d[1])
+    const users = Object.keys(biggestUsersData);
+    const gases = Object.values(biggestUsersData);
     const datasets = [
       {
-        data: rawData,
+        data: gases,
         backgroundColor: objectMap(chartColors, (color, name) => color).slice(
           0,
-          maxUser
+          gases.length
         ),
         label: 'transaction gas'
       }
     ]
-    const labels = data.slice(0, maxUser).map(d => d[0])
     const newOpts = {
       title: {
         display: true,
-        text: `Gas usage at height ${sortedHeight[0]}`
+        text: `Gas usage at height ${height}`
       }
     }
     const newDataset = {
       datasets: datasets,
-      labels: labels
+      labels: users,
     }
-    setOpts(newOpts)
-    setData(newDataset)
 
     var myPie = pie
     if (myPie == undefined) {
@@ -315,7 +302,7 @@ function BiggestGasSpenderCard ({ head, nstats }) {
       myPie = newPie
       setCollapseEvent(myPie)
     } else {
-      pie.data.datasets[0].data = rawData
+      pie.data.datasets[0].data = gases
       pie.options = newOpts
       pie.update()
     }
@@ -324,7 +311,7 @@ function BiggestGasSpenderCard ({ head, nstats }) {
 
   useEffect(() => {
     fillDataset()
-  }, [head, nstats])
+  }, [biggestUsers])
 
   return (
     <div className='card'>
