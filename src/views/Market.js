@@ -8,63 +8,15 @@ import {DatastoreContext} from "../contexts/api";
 import filesize from 'filesize';
 
 const d3 = require('d3')
-const f = d3.format(',')
 const f0 = d3.format(',.0f')
 const f3 = d3.format(',.3f')
-const f1 = d3.format(',.1f')
 
-function Market ({ miners, client, actors, head }) {
+function Market()  {
   const { data } = useContext(DatastoreContext)
-  const econSummary =
-    actors &&
-    client.computeEconomics(head, actors, {
-      projectedDays: 1
-    })
-
-  const WindowPoStGasAvg = 534297287
-  const PreCommitGasAvg = 21701073
-  const ProveCommitGasAvg = 47835932
-
-  const [minersInfo, setMinersInfo] = useState({})
-
-  useEffect(() => {
-    // if (!miners) {
-    //   setMinersInfo({})
-    //   return
-    // }
-    setMinersInfo(miners)
-  }, [miners])
-
-  let count = 0
-
-  useEffect(() => {
-    if (!client || !head || !actors) {
-      return
-    }
-
-    console.log('reload miners list', count++)
-
-    let mounted = true
-    const setMinersIfMounted = info => {
-      if (mounted) setMinersInfo(info)
-    }
-
-    Object.keys(minersInfo).forEach(minerId => {
-      client.updateMinerMarketInfo(
-        minersInfo,
-        minerId,
-        setMinersIfMounted,
-        head
-      )
-    })
-    return () => {
-      mounted = false
-    }
-  }, [client, head, actors])
 
   return (
     <section id='market' className='container'>
-      {/* <Spacegap /> */}
+       {/*<Spacegap />*/}
       <div class='section minerbar'>
         <div class='minerId'>
           <Link to='/market'>Market</Link>
