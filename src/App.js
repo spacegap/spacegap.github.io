@@ -137,12 +137,7 @@ function App () {
                 />
               </Route>
               <Route path='/accounts/:minerId'>
-                <AccountInfo
-                  actors={actors}
-                  client={client}
-                  miners={miners}
-                  head={head}
-                />
+                <AccountInfo />
               </Route>
               <Route path='/full'>
                 <Full client={client} miners={miners} />
