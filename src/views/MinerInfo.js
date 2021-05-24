@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useContext} from 'react'
+import React, {useContext} from 'react'
 import { useParams, withRouter } from 'react-router-dom'
 
 import Summary from '../components/Summary'
@@ -6,11 +6,10 @@ import ReactTooltip from 'react-tooltip'
 import WindowPoSt from '../components/WindowPoSt'
 import MinerBar from '../components/MinerBar'
 import FilToken from '../components/FilToken'
-import {DatastoreContext, DatastoreProvider} from "../contexts/api";
+import {DatastoreContext} from "../contexts/api";
 
 const d3 = require('d3')
 const f = d3.format(',')
-const f0 = d3.format(',.0f')
 const f2 = d3.format(',.2f')
 
 function MinerInfo () {

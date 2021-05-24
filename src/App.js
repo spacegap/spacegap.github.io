@@ -121,12 +121,7 @@ function App () {
                 />
               </Route>
               <Route path='/miners/:minerId'>
-                <MinerInfo
-                  actors={actors}
-                  client={client}
-                  miners={miners}
-                  head={head}
-                />
+                <MinerInfo />
               </Route>
               <Route path='/address/:minerId'>
                 <AddressInfo
