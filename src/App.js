@@ -135,21 +135,16 @@ function App () {
                 <AccountInfo />
               </Route>
               <Route path='/full'>
-                <Full client={client} miners={miners} />
+                <Full />
               </Route>
               <Route path='/status'>
-                <Status head={head} spa={spa} client={client} miners={miners} />
+                <Status />
               </Route>
               <Route path='/gas'>
-                <Gas client={client} head={head} />
+                <Gas />
               </Route>
               <Route path='/market'>
-                <Market
-                  actors={actors}
-                  client={client}
-                  head={head}
-                  miners={miners}
-                />
+                <Market />
               </Route>
               <Route path='/'>
                 <Home
