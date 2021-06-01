@@ -22,82 +22,22 @@ import './App.scss'
 import {DatastoreProvider} from "./contexts/api";
 
 function App () {
-  console.log('reloaded')
-  const [miners, setMiners] = useState()
-  const [head, setHead] = useState()
-  const [node, setNode] = useState('wss://node.glif.io/space07/lotus/rpc/v0')
-  const [client, setFilClient] = useState(new Filecoin(node))
-  const [spa, setSpa] = useState()
-  const [actors, setActors] = useState()
+  const [client, setFilClient] = useState()
 
   useEffect(() => {
     const reload = async () => {
-      await setHead()
-      await setFilClient(new Filecoin(node))
+      await setFilClient(new Filecoin('wss://node.glif.io/space07/lotus/rpc/v0'))
     }
 
     reload()
-  }, [node])
-
-  useEffect(() => {
-    if (!head) return
-    const fetchingEcon = async () => {
-      const actors = await client.fetchGenesisActors(head)
-      setActors(actors)
-    }
-
-    fetchingEcon()
-  }, [client, head])
-
-  // useEffect(() => {
-  //   if (!head) return
-
-  //   client.fetchPower(head).then(power => {
-  //     setSpa(power)
-  //   })
-  // }, [head, client])
-
-  useEffect(() => {
-    let mounted = true
-
-    client.getMiners().then(res => {
-      if (!mounted) return
-      setMiners(res)
-    })
-
-    const fetchingHead = async () => {
-      client.fetchHead().then(fetched => {
-        if (!mounted) return
-        if (head && fetched.Height === head.Height) {
-          console.log('   repeated block, skip')
-          return
-        }
-        console.log('   new block', fetched.Height, head && head.Height)
-        setHead(fetched)
-      })
-    }
-
-    fetchingHead()
-
-    const interval = setInterval(() => {
-      if (mounted) {
-        fetchingHead()
-      }
-    }, 5000)
-
-    return () => {
-      mounted = false
-      clearInterval(interval)
-      console.log('removing interval')
-    }
-  }, [client, head])
+  }, [])
 
   return (
     <DatastoreProvider>
       <Router>
         <div className='App'>
           <div>
-            <TinySummary client={client} head={head} />
+            <TinySummary client={client} />
           </div>
           <header className='container-fluid'>
             <Link to='/'>
@@ -110,26 +50,21 @@ function App () {
             <Spacegap />
             <Switch>
               <Route path='/miners/:minerId/deadlines/:deadlineId'>
-                <Deadline client={client} miners={miners} head={head} />
+                <Deadline client={client} />
               </Route>
-              <Route path='/miners/:minerId/sectors/:sectorId'>
-                <Sector
-                  actors={actors}
-                  client={client}
-                  miners={miners}
-                  head={head}
-                />
-              </Route>
+              {/*<Route path='/miners/:minerId/sectors/:sectorId'>*/}
+              {/*  <Sector*/}
+              {/*    actors={actors}*/}
+              {/*    client={client}*/}
+              {/*    miners={miners}*/}
+              {/*    head={head}*/}
+              {/*  />*/}
+              {/*</Route>*/}
               <Route path='/miners/:minerId'>
                 <MinerInfo />
               </Route>
               <Route path='/address/:minerId'>
-                <AddressInfo
-                  actors={actors}
-                  client={client}
-                  miners={miners}
-                  head={head}
-                />
+                <AddressInfo client={client} />
               </Route>
               <Route path='/accounts/:minerId'>
                 <AccountInfo />
@@ -147,12 +82,7 @@ function App () {
                 <Market />
               </Route>
               <Route path='/'>
-                <Home
-                  actors={actors}
-                  client={client}
-                  head={head}
-                  miners={miners}
-                />
+                <Home />
               </Route>
             </Switch>
           </div>

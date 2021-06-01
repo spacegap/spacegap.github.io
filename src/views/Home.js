@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useContext} from 'react'
+import React, {useContext} from 'react'
 import { withRouter } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import filesize from 'filesize'
@@ -12,11 +12,7 @@ const f0 = d3.format(',.0f')
 const f3 = d3.format(',.3f')
 const f1 = d3.format(',.1f')
 
-function Home ({ miners, client, actors, head }) {
-  const WindowPoStGasAvg = 534297287
-  const PreCommitGasAvg = 21701073
-  const ProveCommitGasAvg = 47835932
-
+function Home () {
   const { data } = useContext(DatastoreContext)
 
   const handleSearch = e => {

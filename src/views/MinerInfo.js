@@ -205,6 +205,7 @@ function MinerInfo () {
             minerId={minerId}
             deadlines={miner.deadlines.nextDeadlines}
             head={data.head}
+            link={() => `/miners/${minerId}`}
           />
         </div>
       )}

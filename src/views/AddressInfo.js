@@ -1,20 +1,19 @@
-import React, { useState, useEffect } from 'react'
+import React, {useState, useEffect, useContext} from 'react'
 import { useParams, withRouter, Redirect } from 'react-router-dom'
+import {DatastoreContext} from "../contexts/api";
 
-const d3 = require('d3')
-const f = d3.format(',')
-const f2 = d3.format(',.0f')
-
-function AddressInfo ({ client, head }) {
+function AddressInfo ({ client }) {
   const { minerId } = useParams()
   const [actorType, setActorType] = useState()
+  const { data } = useContext(DatastoreContext);
 
   useEffect(() => {
-    if (!client || !head) {
+    if (!client || !data.head) {
       return
     }
+
     client
-      .fetchActor(minerId, head.Cids)
+      .fetchActor(minerId, data.head.Cids)
       .then(d => {
         console.log(d)
         setActorType(d.type)
@@ -23,7 +22,7 @@ function AddressInfo ({ client, head }) {
         console.error('actor type not supported')
         setActorType('NotSupported')
       })
-  }, [client, head])
+  }, [client, data.head])
 
   return (
     <>
