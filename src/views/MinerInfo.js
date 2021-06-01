@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, {useContext} from 'react'
 import { useParams, withRouter } from 'react-router-dom'
 
 import Summary from '../components/Summary'
@@ -6,57 +6,30 @@ import ReactTooltip from 'react-tooltip'
 import WindowPoSt from '../components/WindowPoSt'
 import MinerBar from '../components/MinerBar'
 import FilToken from '../components/FilToken'
+import {DatastoreContext} from "../contexts/api";
 
 const d3 = require('d3')
 const f = d3.format(',')
-const f0 = d3.format(',.0f')
 const f2 = d3.format(',.2f')
 
-function MinerInfo ({ client, miners, head, actors }) {
+function MinerInfo () {
+  const { data } = useContext(DatastoreContext)
   const { minerId } = useParams()
-  const [minersInfo, setMinersInfo] = useState({ [minerId]: { id: minerId } })
 
-  const sectorFaultFee =
-    actors &&
-    client.computeEconomics(head, actors, {
-      projectedDays: 1
-    }).sectorFaultFee
+  const sectorFaultFee = data?.sectorFaultFee;
 
-  const sectorProjectedReward1 =
-    actors && client.computeEconomics(head, actors, {}).sectorProjectedReward1
+  const sectorProjectedReward1 = data?.sectorProjectedReward1
+  const sectorProjectedReward = data?.sectorProjectedReward
 
-  const sectorProjectedReward =
-    actors && client.computeEconomics(head, actors, {}).sectorProjectedReward
-
-  // On new (hash or head): fetch miner
-  useEffect(() => {
-    if (!minerId || !head || !client) {
-      return
-    }
-
-    let mounted = true
-    const setMinersIfMounted = info => {
-      if (mounted) setMinersInfo(info)
-    }
-
-    client.updateMinerInfo(minersInfo, minerId, setMinersIfMounted, head)
-
-    return () => {
-      mounted = false
-    }
-  }, [client, head, minerId])
-
-  if (!minerId || !head || !minersInfo[minerId]) {
+  if (!data || !data.miners[minerId]) {
     return <></>
   }
 
-  const miner = minersInfo[minerId]
+  const miner = data.miners[minerId]
 
   return (
     <section className='container'>
       <MinerBar
-        client={client}
-        miners={miners}
         minerId={minerId}
         miner={miner}
       />
@@ -66,7 +39,7 @@ function MinerInfo ({ client, miners, head, actors }) {
             title={
               miner.deposits && (
                 <>
-                  {f(miner.deposits.Balance || 0)}
+                  {f(miner.deposits.balance || 0)}
                   <FilToken />
                 </>
               )
@@ -78,7 +51,7 @@ function MinerInfo ({ client, miners, head, actors }) {
             title={
               miner.deposits && (
                 <>
-                  {f(miner.deposits.Available || 0)}
+                  {f(miner.deposits.available || 0)}
                   <FilToken />
                 </>
               )
@@ -91,7 +64,7 @@ function MinerInfo ({ client, miners, head, actors }) {
             title={
               miner.deposits && (
                 <>
-                  {f(miner.deposits.LockedFunds || 0)}
+                  {f(miner.deposits.lockedFunds || 0)}
                   <FilToken />
                 </>
               )
@@ -102,31 +75,31 @@ function MinerInfo ({ client, miners, head, actors }) {
           <Summary
             title={
               miner.deadlines &&
-              `${f2((miner.deadlines.SectorsCount * 32) / 1024)} TiB`
+              `${f2((miner.deadlines.sectorsCount * 32) / 1024)} TiB`
             }
-            desc={`${(miner.deadlines && f(miner.deadlines.SectorsCount)) ||
-              ''} Total Sectors`}
+            desc={`${(miner.deadlines && f(miner.deadlines.sectorsCount)) ||
+            ''} Total Sectors`}
           />
 
           <Summary
             title={
               miner.deadlines &&
-              `${f2((miner.deadlines.ActiveCount * 32) / 1024)} TiB`
+              `${f2((miner.deadlines.activeCount * 32) / 1024)} TiB`
             }
-            desc={`${(miner.deadlines && f(miner.deadlines.ActiveCount)) ||
-              ''} Active Sectors`}
+            desc={`${(miner.deadlines && f(miner.deadlines.activeCount)) ||
+            ''} Active Sectors`}
           />
           <Summary
             title={
               miner.deadlines &&
-              `${f2((miner.deadlines.FaultsCount * 32) / 1024)} TiB`
+              `${f2((miner.deadlines.faultsCount * 32) / 1024)} TiB`
             }
-            desc={`${(miner.deadlines && f(miner.deadlines.FaultsCount)) ||
-              ''} Faulty Sectors`}
+            desc={`${(miner.deadlines && f(miner.deadlines.faultsCount)) ||
+            ''} Faulty Sectors`}
           />
 
           <Summary
-            title={(miner.preCommits && f(miner.preCommits.Count)) || ''}
+            title={f(miner.preCommitsCount || 0)}
             desc='PreCommits'
           />
         </div>
@@ -136,95 +109,73 @@ function MinerInfo ({ client, miners, head, actors }) {
         <h3>Economics</h3>
         <div className='grid grid-4'>
           <Summary
-            title={
-              miner.deposits && (
-                <>
-                  {f(miner.deposits.InitialPledge || 0)}
-                  <FilToken />
-                </>
-              )
-            }
+            title={miner.deposits && (
+              <>
+                {f(miner.deposits.initialPledge)}
+                <FilToken />
+              </>
+            )}
             desc='Initial Pledge'
           />
-
           <Summary
             desc='PreCommit Deposit'
-            title={
-              miner.deposits && (
-                <>
-                  {f(miner.deposits.PreCommitDeposits || 0)}
-                  <FilToken />
-                </>
-              )
+            title={miner.deposits && (
+              <>
+                {f(miner.deposits.preCommitDeposits || 0)}
+                <FilToken />
+              </>
+            )
             }
           />
 
-          <Summary
-            title={
-              miner.deposits && (
-                <>
-                  {f(miner.deposits.FeeDebt || 0)}
-                  <FilToken />
-                </>
-              )
-            }
-            desc='Fee Debt'
+          <Summary title={miner.deposits && (
+            <>
+              {f(miner.deposits.feeDebt || 0)}
+              <FilToken />
+            </>
+          )}
+                   desc='Fee Debt'
           />
-
           <Summary
-            title={
-              miner.deposits &&
-              sectorFaultFee &&
-              `${f2(
-                (+miner.deposits.Available + +miner.deposits.LockedFunds) /
-                  +sectorFaultFee || 0
-              )}`
+            title={miner.deposits &&
+            `${f2(
+              (+miner.deposits.available + +miner.deposits.lockedFunds) /
+              +sectorFaultFee || 0
+            )}`
             }
             desc='Faults to Debt'
           />
         </div>
         <div className='grid'>
           <Summary
-            title={
-              miner.deadlines &&
-              sectorProjectedReward1 && (
-                <>
-                  {f2(sectorProjectedReward1 * miner.deadlines.ActiveCount)}
-                  <FilToken />
-                </>
-              )
+            title={miner.deadlines && sectorProjectedReward1 && (
+              <>
+                {f2(sectorProjectedReward1 * miner.deadlines.activeCount)}
+                <FilToken />
+              </>
+            )
             }
             desc='Daily reward*'
           />
           <Summary
-            title={
-              miner.deadlines &&
-              sectorProjectedReward && (
-                <>
-                  {f2(sectorProjectedReward * miner.deadlines.ActiveCount)}
-                  <FilToken />
-                </>
-              )
+            title={miner.deadlines && sectorProjectedReward && (
+              <>
+                {f2(sectorProjectedReward * miner.deadlines.activeCount)}
+                <FilToken />
+              </>
+            )
             }
             desc='360-Day reward*'
           />
-          <Summary
-            title={
-              actors &&
-              miner.deadlines &&
-              sectorProjectedReward && (
-                <>
-                  {f2(
-                    // 1.0 /
-                    5 *
-                      2880 *
-                      ((miner.deadlines.ActiveCount * 32) /
-                        (+actors.Power.State.TotalBytesCommitted / 2 ** 30))
-                  )}
-                </>
-              )
-            }
-            desc='Daily Blocks*'
+          <Summary title={miner.deadlines && sectorProjectedReward && (
+            <>
+              {f2(5 * 2880 * (
+                (miner.deadlines.activeCount * 32) /
+                (+data.totalBytesCommitted / 2 ** 30)
+              ))}
+            </>
+          )}
+                   desc='Daily Blocks*'
           />
         </div>
         (*) These numbers are projections and do not take into account several
@@ -253,7 +204,8 @@ function MinerInfo ({ client, miners, head, actors }) {
           <WindowPoSt
             minerId={minerId}
             deadlines={miner.deadlines.nextDeadlines}
-            head={head}
+            head={data.head}
+            link={() => `/miners/${minerId}`}
           />
         </div>
       )}
@@ -280,25 +232,25 @@ function MinerInfo ({ client, miners, head, actors }) {
                 <li>Current Deadline: {miner.deadlines.deadline.Index}</li>
                 <li>
                   FaultCutoff:{' '}
-                  {miner.deadlines.deadline.FaultCutoff - head.Height}
+                  {miner.deadlines.deadline.FaultCutoff - data.head.Height}
                 </li>
                 <li>
-                  Challenge: {miner.deadlines.deadline.Challenge - head.Height}
+                  Challenge: {miner.deadlines.deadline.Challenge - data.head.Height}
                 </li>
                 <li>
-                  {miner.deadlines.deadline.Open - head.Height > 0
+                  {miner.deadlines.deadline.Open - data.head.Height > 0
                     ? 'Open'
                     : 'Opened'}
-                  : {miner.deadlines.deadline.Open - head.Height}
+                  : {miner.deadlines.deadline.Open - data.head.Height}
                 </li>
-                <li>Close: {miner.deadlines.deadline.Close - head.Height}</li>
+                <li>Close: {miner.deadlines.deadline.Close - data.head.Height}</li>
               </ul>
             </div>
             <div className='col'>
               <WindowPoSt
                 minerId={minerId}
                 deadlines={[miner.deadlines.nextDeadlines[0]]}
-                head={head}
+                head={data.head}
               />
             </div>
           </div>
@@ -322,14 +274,14 @@ function MinerInfo ({ client, miners, head, actors }) {
               </ReactTooltip>
             </div>
           </div>
-          {miner.preCommits.PreCommitDeadlines.length === 0 && (
+          {miner.preCommits.preCommitDeadlines?.length === 0 && (
             <div>No new sectors</div>
           )}
           <div className='deadlines provecommit'>
-            {miner.preCommits.PreCommitDeadlines.map((d, i) => (
+            {miner.preCommits.preCommitDeadlines?.map((d, i) => (
               <div key={i} className='deadline'>
                 <div className='out'>
-                  In {d.Expiry - head.Height}
+                  In {d.Expiry - data.head.Height}
                   {/* <span className="epochs">epochs</span> */}
                 </div>
                 <div className='hddWrapper'>

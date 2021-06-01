@@ -57,7 +57,10 @@ const codeMap = {
   bafkqadlgnfwc6mrpmfrwg33vnz2a: 'accountActor',
   bafkqadtgnfwc6mrpnv2wy5djonuwo: 'multisigActor',
   bafkqafdgnfwc6mrpobqxs3lfnz2gg2dbnzxgk3a: 'paymentChannelActor',
-  bafkqaetgnfwc6mrpon2g64tbm5sw22lomvza: 'storageMinerActorV2'
+  bafkqaetgnfwc6mrpon2g64tbm5sw22lomvza: 'storageMinerActorV2',
+
+  // v3
+  bafkqaetgnfwc6nbpon2g64tbm5sw22lomvza: 'storageMinerActorV3',
 }
 
 const partitionSchema = height => {
@@ -232,6 +235,86 @@ function decodeRLE3 (runs) {
   return res
 }
 
+export function parseNode(data) {
+  return {
+    pointers: data[1],
+    bitfield: bytesToBig(Buffer.from(data[0], 'base64')),
+  }
+}
+
+function fromPreCommitSchema(data) {
+  const keys = Object.keys(data)
+  return keys.reduce((acc, key) => ({
+    ...acc,
+    [key]: {
+      info: {
+        seal_proof: data[key][0][0],
+        sector_number: data[key][0][1],
+        sealed_cid: data[key][0][2],
+        seal_rand_epoch: data[key][0][3],
+        deal_ids: data[key][0][4],
+        expiration: data[key][0][5],
+        replace_capacity: data[key][0][6],
+        replace_sector_deadline: data[key][0][7],
+        replace_sector_partition: data[key][0][8],
+        replace_sector_number: data[key][0][9]
+      },
+      precommit_deposit: bytesToBig(data[key][1]),
+      precommit_epoch: data[key][2],
+      deal_weight: bytesToBig(data[key][3]),
+      verified_deal_weight: bytesToBig(data[key][4])
+    }
+  }), {})
+}
+
+export function makeBuffers(obj) {
+  if (typeof obj === 'string') {
+    return Buffer.from(obj, 'base64')
+  }
+  if (obj instanceof Array) {
+    return obj.map(makeBuffers)
+  }
+  return obj
+}
+
+async function forEach(n, load, cb) {
+  let version = 2;
+  if (!n.data.pointers[0]['/'] && (!Array.isArray(n.data.pointers[0]) || n.data.pointers[0]['0'].codec)) version = 1;
+  if (version == 1) {
+    for (const c of n.data.pointers) {
+      if (c[0]) {
+        const child = await load(c[0]['/'])
+        await forEach({ bitWidth: n.bitWidth, data: parseNode(child) }, load, cb)
+      }
+      if (c[1]) {
+        for (const [k, v] of c[1]) {
+          await cb(Buffer.from(k, 'base64'), makeBuffers(v))
+        }
+      }
+    }
+  } else {
+    for (const c of n.data.pointers) {
+      if (c instanceof Array) {
+        for (const [k, v] of c) {
+          await cb(makeBuffers(k), makeBuffers(v))
+        }
+      } else {
+        const child = await load(c['/'])
+        await forEach({ bitWidth: n.bitWidth, data: parseNode(child) }, load, cb)
+      }
+    }
+  }
+}
+
+export async function buildObject(data, load) {
+  var dataObject = {};
+  await forEach({ bitWidth: 5, data: parseNode(data) }, load,
+    (k, v) => {
+      dataObject[k.toString('hex')] = v;
+    })
+  return dataObject
+}
+
 export default class Filecoin {
   constructor (endpointUrl) {
     this.url = endpointUrl
@@ -243,17 +326,22 @@ export default class Filecoin {
     this.minfo = {}
   }
 
-  async getData (head, path, schema) {
-    const state = head.Blocks[0].ParentStateRoot['/']
-    const node =
-      head.Height >= 138720 ? `${state}/1/${path}` : `${state}/${path}`
-    const data = (await this.client.chainGetNode(node)).Obj
-
-    const self = this
-    return await Fil.methods.decode(schema, data).asObject(async a => {
-      const res = await self.client.chainGetNode(a)
+  async getData (miner) {
+    const load = async (a) => {
+      const res = await this.client.chainGetNode(a)
       return res.Obj
-    })
+    }
+
+    const actor = await this.client.stateGetActor(miner, null)
+    console.log(`${actor.Head['/']}/6`)
+    const data = (await this.client.chainGetNode(`${actor.Head['/']}/6`)).Obj
+    console.log({data})
+    if (!data || !data[0]) {
+      return {}
+    }
+    const object = await buildObject(data, load);
+    console.log({object})
+    return fromPreCommitSchema(object)
   }
 
   async fetchHead () {
@@ -384,15 +472,10 @@ export default class Filecoin {
   }
 
   async fetchDeadlinesProxy (miner, head) {
-    const state = head.Blocks[0].ParentStateRoot['/']
-    const node =
-      head.Height >= 138720
-        ? `${state}/1/@Ha:${miner}/1/12`
-        : `${state}/@Ha:${miner}/1/11`
-    const deadlinesCids = (await this.client.chainGetNode(node)).Obj[0]
-
-    const deadlines = await asyncPool(24, deadlinesCids, async minerCid => {
-      const deadline = (await this.client.ChainGetNode(`${minerCid['/']}`)).Obj
+    const actor = await this.client.stateGetActor(miner, [])
+    const deadlinesCids = (await this.client.chainGetNode(`${actor.Head['/']}/12`)).Obj[0]
+    const deadlines = await asyncPool(24, deadlinesCids, async deadlineCid => {
+      const deadline = (await this.client.chainGetNode(deadlineCid['/'])).Obj
       return {
         Partitions: deadline[0],
         LiveSectors: deadline[4],
@@ -534,8 +617,8 @@ export default class Filecoin {
   }
 
   async fetchPreCommittedSectors (hash, head) {
-    const node = head.Height >= 138720 ? `@Ha:${hash}/1/6` : `@Ha:${hash}/1/5`
-    const preCommittedSectors = await this.getData(head, node, preCommitSchema)
+    const node = `@Ha:${hash}/1/6`
+    const preCommittedSectors = await this.getData(hash)
     const PreCommitDeadlines = d3
       .groups(
         Object.keys(preCommittedSectors).map(d => ({

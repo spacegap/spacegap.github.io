@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, {useState, useEffect, useContext} from 'react'
 import Drand from '../services/drand'
+import {DatastoreContext} from "../contexts/api";
 
 const d3 = require('d3')
 const f = d3.format(',')
@@ -9,21 +10,17 @@ function getFilecoinExpectedHeight () {
   return Math.floor((Date.now() - filGenesis) / 1000 / 30)
 }
 
-export default function TinySummary ({ client, head }) {
+export default function TinySummary () {
   const [expected, setFilExpectedHeight] = useState(getFilecoinExpectedHeight())
   const [round, setRound] = useState()
+  const {data} = useContext(DatastoreContext)
 
   useEffect(() => {
-    let mounted = true
-
     const fetchingHead = async () => {
       Drand().then(fetched => {
-        if (!mounted) return
         if (round && fetched.current === round.current) {
-          console.log('   repeated drand, skip')
           return
         }
-        console.log('   new drand', fetched)
         setRound(fetched)
       })
 
@@ -35,17 +32,13 @@ export default function TinySummary ({ client, head }) {
     fetchingHead()
 
     const interval = setInterval(() => {
-      if (mounted) {
         fetchingHead()
-      }
     }, 5000)
 
     return () => {
-      mounted = false
       clearInterval(interval)
-      console.log('removing interval')
     }
-  }, [client, head, round])
+  }, [])
 
   return (
     <div className='d-none d-md-block'>
@@ -53,8 +46,8 @@ export default function TinySummary ({ client, head }) {
         <div>
           Filecoin Status{' '}
           <span>
-            {head && expected && head.Height < expected
-              ? expected - head.Height === 1
+            {data && data.height < expected
+              ? expected - data.height === 1
                 ? 'behind'
                 : 'receiving'
               : 'ok'}
@@ -63,9 +56,13 @@ export default function TinySummary ({ client, head }) {
 
         <div className='tiny'>
           Current Tipset{' '}
-          <a href={`https://filfox.info/en/tipset/${head && head.Height}`}>
-            {head && f(head.Height)}
-          </a>
+          {data && data.head ? (
+            <a href={`https://filfox.info/en/tipset/${data.head.Height}`}>
+              {f(data.head.Height)}
+            </a>
+          ) : (
+            <p>loading</p>
+          )}
         </div>
 
         <div className='tiny'>

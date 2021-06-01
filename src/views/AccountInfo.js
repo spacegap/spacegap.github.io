@@ -1,57 +1,39 @@
-import React, { useState, useEffect } from 'react'
+import React, {useContext} from 'react'
 import { useParams, withRouter } from 'react-router-dom'
 
 import Summary from '../components/Summary'
-import ReactTooltip from 'react-tooltip'
-import WindowPoSt from '../components/WindowPoSt'
 import MinerBar from '../components/MinerBar'
 import FilToken from '../components/FilToken'
+import {DatastoreContext} from "../contexts/api";
 
 const d3 = require('d3')
 const f = d3.format(',')
-const f2 = d3.format(',.0f')
 
-function AccountInfo ({ client, miners, head, actors }) {
+function AccountInfo () {
   const { minerId } = useParams()
-  const [minersInfo, setMinersInfo] = useState({ [minerId]: { id: minerId } })
+  const { data } = useContext(DatastoreContext)
 
-  useEffect(() => {
-    if (!minerId || !head || !client) {
-      return
-    }
-
-    client.client.StateReadState(minerId, head.Cids).then(result => {
-      const minerInfo = minersInfo[minerId]
-      minerInfo.deposits = result
-      setMinersInfo({ ...minersInfo, [minerId]: { ...minerInfo } })
-    })
-  }, [client, head, minerId])
-
-  if (!minerId || !head || !minersInfo[minerId]) {
-    return <></>
+  if (!data) {
+    return <></>;
   }
 
-  const miner = minersInfo[minerId]
+  const miner = data.miners[minerId]
 
   return (
     <section className='container'>
       <MinerBar
-        client={client}
-        miners={miners}
         minerId={minerId}
         miner={miner}
       />
       <div id='deposits' className='section'>
         <div className='grid'>
           <Summary
-            title={
-              miner.deposits && (
-                <>
-                  {f(miner.deposits.Balance || 0)}
-                  <FilToken />
-                </>
-              )
-            }
+            title={miner.deposits && (
+              <>
+                {f(miner.deposits.balance || 0)}
+                <FilToken />
+              </>
+            )}
             desc='Balance'
           />
         </div>
