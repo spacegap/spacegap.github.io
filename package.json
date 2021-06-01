@@ -1,7 +1,7 @@
 {
   "name": "spacegap",
   "version": "0.1.0",
-  "homepage": "./spacegap",
+  "homepage": "https://Digital-MOB-Filecoin.github.io/spacegap",
   "private": true,
   "dependencies": {
     "@babel/plugin-syntax-import-meta": "^7.10.4",
