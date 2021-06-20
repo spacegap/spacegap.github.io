@@ -6,14 +6,15 @@ function AddressInfo ({ client }) {
   const { minerId } = useParams()
   const [actorType, setActorType] = useState()
   const { data } = useContext(DatastoreContext);
+  const { head } = data;
 
   useEffect(() => {
-    if (!client || !data.head) {
+    if (!client || !head) {
       return
     }
 
     client
-      .fetchActor(minerId, data.head.Cids)
+      .fetchActor(minerId, head.Cids)
       .then(d => {
         console.log(d)
         setActorType(d.type)
@@ -22,7 +23,7 @@ function AddressInfo ({ client }) {
         console.error('actor type not supported')
         setActorType('NotSupported')
       })
-  }, [client, data.head])
+  }, [client, head])
 
   return (
     <>

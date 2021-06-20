@@ -14,6 +14,7 @@ const f1 = d3.format(',.1f')
 
 function Home () {
   const { data } = useContext(DatastoreContext)
+  const { actors, economics } = data;
 
   const handleSearch = e => {
     if (e.key === 'Enter') {
@@ -35,35 +36,35 @@ function Home () {
       <div id='actors' className='section'>
         <h3>Tokens</h3>
         <div className='grid'>
-          <Summary title={data && <>{f0(data.circulatingSupply)}<FilToken /></>} desc='Circulating Supply' />
-          <Summary title={data && <>{f0(data.burnt)}<FilToken /></>} desc='Burnt'/>
-          <Summary title={data && <>{f0(data.locked)}<FilToken /></>} desc='Locked'/>
+          <Summary title={actors && <>{f0(actors.circulatingSupply)}<FilToken /></>} desc='Circulating Supply' />
+          <Summary title={actors && <>{f0(actors.burnt)}<FilToken /></>} desc='Burnt'/>
+          <Summary title={actors && <>{f0(actors.locked)}<FilToken /></>} desc='Locked'/>
         </div>
         <div className='grid'>
-          <Summary title={data && <>{f0(data.last24hNewSupply)}<FilToken /></>} desc='24h new supply' />
-          <Summary title={data && <>{f0(data.last24hNewBurnt)}<FilToken /></>} desc='24h new Burnt'/>
-          <Summary title={data && <>{f0(data.last24hLocked)}<FilToken /></>} desc='Locked'/>
+          <Summary title={actors && <>{f0(actors.last24hNewSupply)}<FilToken /></>} desc='24h new supply' />
+          <Summary title={actors && <>{f0(actors.last24hNewBurnt)}<FilToken /></>} desc='24h new Burnt'/>
+          <Summary title={actors && <>{f0(actors.last24hLocked)}<FilToken /></>} desc='Locked'/>
         </div>
       </div>
       <div id='actors2' className='section'>
         <h3>Power</h3>
         <div className='grid'>
-          <Summary title={data && `${f1(data.networkRaw)} PiB`} desc='Network Raw'/>
-          <Summary title={data && `${f1(data.last24hNewStorage)} PiB`} desc='24h new storage' />
-          <Summary title={data && data.activeMiners} desc='Active Miners'/>
+          <Summary title={actors && `${f1(actors.networkRaw)} PiB`} desc='Network Raw'/>
+          <Summary title={actors && `${f1(actors.last24hNewStorage)} PiB`} desc='24h new storage' />
+          <Summary title={actors && actors.activeMiners} desc='Active Miners'/>
         </div>
       </div>
 
       <div id='economics' className='section'>
         <h3>Economics</h3>
         <div className='grid'>
-          <Summary title={data && <>{f3(data.sectorPledge)}<FilToken /></>} desc='Sector Pledge'/>
-          <Summary title={data && <>{f3(data.sectorProjectedReward || 0)}<FilToken /></>} desc='Sector 360-Days Reward'/>
-          <Summary title={data && <>{f3(data.sectorFaultFee || 0)}<FilToken /></>} desc='Sector Fault Fee' />
+          <Summary title={economics && <>{f3(economics.sectorPledge)}<FilToken /></>} desc='Sector Pledge'/>
+          <Summary title={economics && <>{f3(economics.sectorProjectedReward || 0)}<FilToken /></>} desc='Sector 360-Days Reward'/>
+          <Summary title={economics && <>{f3(economics.sectorFaultFee || 0)}<FilToken /></>} desc='Sector Fault Fee' />
         </div>
         <div class='grid'>
-          <Summary title={data && <>{f3(data.blockReward)}<FilToken /></>} desc='Block Reward'/>
-          <Summary title={data && <>{f3(data.dayFilTiBReward)}<FilToken /></>} desc='1-day FIL/TiB Reward'/>
+          <Summary title={actors && <>{f3(actors.blockReward)}<FilToken /></>} desc='Block Reward'/>
+          <Summary title={economics && <>{f3(economics.dayFilTiBReward)}<FilToken /></>} desc='1-day FIL/TiB Reward'/>
         </div>
         These numbers are approximate projections based on the current network
         state and may be incorrect, do your own research.

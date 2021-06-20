@@ -5,12 +5,11 @@ import {DatastoreContext} from "../contexts/api";
 
 export default function Status () {
   const { data } = useContext(DatastoreContext)
+  const { miners, head } = data;
 
-  if (!data || !data.miners) {
+  if (!miners) {
     return null;
   }
-
-  const { miners, head } = data;
 
   return (
     <section className='container'>

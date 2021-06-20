@@ -1,4 +1,4 @@
-import React, {useContext} from 'react'
+import React, {useContext, useMemo} from 'react'
 import { useParams, withRouter } from 'react-router-dom'
 
 import Summary from '../components/Summary'
@@ -15,17 +15,15 @@ const f2 = d3.format(',.2f')
 function MinerInfo () {
   const { data } = useContext(DatastoreContext)
   const { minerId } = useParams()
+  const { economics, miners, actors, head } = data;
+  const sectorFaultFee = useMemo(() => economics ? +economics.sectorFaultFee : 0, [economics]);
+  const sectorProjectedReward = useMemo(() => economics ? +economics.sectorProjectedReward : 0, [economics]);
+  const sectorProjectedReward1 = useMemo(() => economics ? +economics.sectorProjectedReward1 : 0, [economics]);
+  const miner = useMemo(() => miners && miners[minerId] ? miners[minerId] : undefined, [miners])
 
-  const sectorFaultFee = data?.sectorFaultFee;
-
-  const sectorProjectedReward1 = data?.sectorProjectedReward1
-  const sectorProjectedReward = data?.sectorProjectedReward
-
-  if (!data || !data.miners[minerId]) {
-    return <></>
+  if (!miner) {
+    return <></>;
   }
-
-  const miner = data.miners[minerId]
 
   return (
     <section className='container'>
@@ -171,7 +169,7 @@ function MinerInfo () {
             <>
               {f2(5 * 2880 * (
                 (miner.deadlines.activeCount * 32) /
-                (+data.totalBytesCommitted / 2 ** 30)
+                (+actors.totalBytesCommitted / 2 ** 30)
               ))}
             </>
           )}
@@ -204,7 +202,7 @@ function MinerInfo () {
           <WindowPoSt
             minerId={minerId}
             deadlines={miner.deadlines.nextDeadlines}
-            head={data.head}
+            head={head}
             link={() => `/miners/${minerId}`}
           />
         </div>
@@ -232,25 +230,25 @@ function MinerInfo () {
                 <li>Current Deadline: {miner.deadlines.deadline.Index}</li>
                 <li>
                   FaultCutoff:{' '}
-                  {miner.deadlines.deadline.FaultCutoff - data.head.Height}
+                  {miner.deadlines.deadline.FaultCutoff - head.Height}
                 </li>
                 <li>
-                  Challenge: {miner.deadlines.deadline.Challenge - data.head.Height}
+                  Challenge: {miner.deadlines.deadline.Challenge - head.Height}
                 </li>
                 <li>
-                  {miner.deadlines.deadline.Open - data.head.Height > 0
+                  {miner.deadlines.deadline.Open - head.Height > 0
                     ? 'Open'
                     : 'Opened'}
-                  : {miner.deadlines.deadline.Open - data.head.Height}
+                  : {miner.deadlines.deadline.Open - head.Height}
                 </li>
-                <li>Close: {miner.deadlines.deadline.Close - data.head.Height}</li>
+                <li>Close: {miner.deadlines.deadline.Close - head.Height}</li>
               </ul>
             </div>
             <div className='col'>
               <WindowPoSt
                 minerId={minerId}
                 deadlines={[miner.deadlines.nextDeadlines[0]]}
-                head={data.head}
+                head={head}
               />
             </div>
           </div>
@@ -281,7 +279,7 @@ function MinerInfo () {
             {miner.preCommits.preCommitDeadlines?.map((d, i) => (
               <div key={i} className='deadline'>
                 <div className='out'>
-                  In {d.Expiry - data.head.Height}
+                  In {d.Expiry - head.Height}
                   {/* <span className="epochs">epochs</span> */}
                 </div>
                 <div className='hddWrapper'>

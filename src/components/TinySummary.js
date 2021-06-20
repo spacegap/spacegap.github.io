@@ -13,7 +13,8 @@ function getFilecoinExpectedHeight () {
 export default function TinySummary () {
   const [expected, setFilExpectedHeight] = useState(getFilecoinExpectedHeight())
   const [round, setRound] = useState()
-  const {data} = useContext(DatastoreContext)
+  const { data } = useContext(DatastoreContext)
+  const { head } = data;
 
   useEffect(() => {
     const fetchingHead = async () => {
@@ -46,8 +47,8 @@ export default function TinySummary () {
         <div>
           Filecoin Status{' '}
           <span>
-            {data && data.height < expected
-              ? expected - data.height === 1
+            {head && head.Height < expected
+              ? expected - head.Height === 1
                 ? 'behind'
                 : 'receiving'
               : 'ok'}
@@ -56,9 +57,9 @@ export default function TinySummary () {
 
         <div className='tiny'>
           Current Tipset{' '}
-          {data && data.head ? (
-            <a href={`https://filfox.info/en/tipset/${data.head.Height}`}>
-              {f(data.head.Height)}
+          {head ? (
+            <a href={`https://filfox.info/en/tipset/${head.Height}`}>
+              {f(head.Height)}
             </a>
           ) : (
             <p>loading</p>

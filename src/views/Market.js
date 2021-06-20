@@ -13,6 +13,7 @@ const f3 = d3.format(',.3f')
 
 function Market()  {
   const { data } = useContext(DatastoreContext)
+  const { actors } = data;
 
   return (
     <section id='market' className='container'>
@@ -28,7 +29,7 @@ function Market()  {
             title={
               data && (
                 <>
-                  {f3(data.totalProviderLockedCollateral)}
+                  {f3(actors && actors.totalProviderLockedCollateral)}
                   <FilToken />
                 </>
               )
@@ -39,7 +40,7 @@ function Market()  {
             title={
               data && (
                 <>
-                  {f3(data.totalClientStorageFee)}
+                  {f3(actors && actors.totalClientStorageFee)}
                   <FilToken />
                 </>
               )
@@ -47,7 +48,7 @@ function Market()  {
             desc='Client Storage Fee'
           />
           <Summary
-            title={data && <>{f0(data.nextId)}</>}
+            title={actors && <>{f0(actors.nextId)}</>}
             desc='Total deals'
           />
         </div>

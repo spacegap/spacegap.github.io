@@ -1,4 +1,4 @@
-import React, {useContext} from 'react'
+import React, {useContext, useMemo} from 'react'
 import { useParams, withRouter } from 'react-router-dom'
 
 import Summary from '../components/Summary'
@@ -12,13 +12,13 @@ const f = d3.format(',')
 function AccountInfo () {
   const { minerId } = useParams()
   const { data } = useContext(DatastoreContext)
+  const { miners } = data;
+  const miner = useMemo(() => miners && miners[minerId] ? miners[minerId] : undefined, [miners]);
 
-  if (!data) {
+  if (!miner) {
     return <></>;
   }
-
-  const miner = data.miners[minerId]
-
+  
   return (
     <section className='container'>
       <MinerBar
