@@ -1,40 +1,20 @@
-import React, { useState, useEffect } from 'react'
+import React, {useState, useEffect, useContext} from 'react'
 import { Link } from 'react-router-dom'
 import asyncPool from 'tiny-async-pool'
 
 import WindowPoSt from '../components/WindowPoSt'
+import {DatastoreContext} from "../contexts/api";
 
-export default function Full ({ miners, client }) {
-  const [minersDeadlines, setMinersDeadlines] = useState({})
-  const [head, setHead] = useState()
+export default function Full () {
+  const { data } = useContext(DatastoreContext);
 
-  useEffect(() => {
-    const fetchingHead = async () => {
-      const fetched = await client.fetchHead()
-      setHead(fetched)
-    }
-    fetchingHead()
-  }, [client])
+  if (!data) {
+    return <section id='LookUp' className='container'>
+      loading
+    </section>
+  }
 
-  useEffect(() => {
-    let mounted = true
-    if (!head) return
-
-    const minersList = Object.keys(miners)
-      .slice(0, 50)
-      .map(d => miners[d].address)
-    asyncPool(5, minersList, async minerId => {
-      if (!mounted) return
-      const deadlines = await client.fetchDeadlines(minerId, head)
-      if (!mounted) return
-      minersDeadlines[minerId] = deadlines.nextDeadlines
-      return await setMinersDeadlines({ ...minersDeadlines })
-    })
-
-    return () => {
-      mounted = false
-    }
-  }, [client, head, miners])
+  const { miners, head } = data;
 
   return (
     <section id='LookUp' className='container'>
@@ -47,9 +27,9 @@ export default function Full ({ miners, client }) {
               <Link to={`/miners/${miners[d].address}`}>
                 {miners[d].address}
               </Link>
-
               <WindowPoSt
-                deadlines={minersDeadlines[miners[d].address]}
+                minerId={miners[d].address}
+                deadlines={miners[d].deadlines.nextDeadlines || []}
                 head={head}
               />
             </div>

@@ -1,21 +1,18 @@
-import React, { useState, useEffect } from 'react'
-import { useParams, withRouter } from 'react-router-dom'
+import React, {useState, useEffect, useContext} from 'react'
+import { useParams, withRouter, Redirect } from 'react-router-dom'
+import {DatastoreContext} from "../contexts/api";
 
-import MinerInfo from './MinerInfo'
-import { Redirect } from 'react-router-dom'
-
-const d3 = require('d3')
-const f = d3.format(',')
-const f2 = d3.format(',.0f')
-
-function AddressInfo ({ client, miners, head, actors }) {
+function AddressInfo ({ client }) {
   const { minerId } = useParams()
   const [actorType, setActorType] = useState()
+  const { data } = useContext(DatastoreContext);
+  const { head } = data;
 
   useEffect(() => {
     if (!client || !head) {
       return
     }
+
     client
       .fetchActor(minerId, head.Cids)
       .then(d => {
@@ -30,10 +27,9 @@ function AddressInfo ({ client, miners, head, actors }) {
 
   return (
     <>
-      {actorType === 'storageMinerActorV2' && (
+      {actorType?.includes("storageMinerActor") && (
         <Redirect to={`/miners/${minerId}`} />
       )}
-      {/* {actorType === 'accountActor' && <Redirect to={`/accounts/${minerId}`} />} */}
       {actorType === 'NotSupported' && <>Actor type not supported</>}
     </>
   )

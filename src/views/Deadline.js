@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, {useState, useEffect, useContext} from 'react'
 import { useParams, withRouter } from 'react-router-dom'
 import ReactTooltip from 'react-tooltip'
 import WindowPoSt from '../components/WindowPoSt'
@@ -6,16 +6,18 @@ import Summary from '../components/Summary'
 import asyncPool from 'tiny-async-pool'
 import MinerBar from '../components/MinerBar'
 import { Link } from 'react-router-dom'
+import {DatastoreContext} from "../contexts/api";
 const d3 = require('d3')
 const f = d3.format(',')
 const f2 = d3.format(',.1f')
 
-function Deadline ({ miners, client, head }) {
+function Deadline ({ client }) {
   const { minerId, deadlineId } = useParams()
   const [partitions, setPartitions] = useState()
   // const [miner, setMiner] = useState({ id: minerId })
   const [minerDeadlines, setMinerDeadlines] = useState({})
   const [todayDeadlines, setTodayDeadlines] = useState()
+  const { data } = useContext(DatastoreContext);
 
   const deadlinesArray = () => {
     return Object.keys(minerDeadlines)
@@ -46,7 +48,7 @@ function Deadline ({ miners, client, head }) {
   }, [todayDeadlines])
 
   useEffect(() => {
-    if (!minerId || !head || !deadlineId) {
+    if (!minerId || !data.head || !deadlineId) {
       return
     }
 
@@ -54,10 +56,10 @@ function Deadline ({ miners, client, head }) {
     let firstTime = true
     const continueLoad = () => firstTime || mounted
 
-    const days = Math.ceil(head.Height / 2880)
+    const days = Math.ceil(data.head.Height / 2880)
     const epochs = [...Array(days)]
       .map((_, i) => ({
-        height: i * 2880 <= head.Height ? i * 2880 : head.Height,
+        height: i * 2880 <= data.head.Height ? i * 2880 : data.head.Height,
         day: days - i - 1
       }))
       .reverse()
@@ -98,13 +100,11 @@ function Deadline ({ miners, client, head }) {
     return () => {
       mounted = false
     }
-  }, [client, head, minerId, deadlineId, todayDeadlines])
+  }, [client, data.head, minerId, deadlineId, todayDeadlines])
 
   return (
     <section className='container'>
       <MinerBar
-        client={client}
-        miners={miners}
         minerId={minerId}
         deadlineId={deadlineId}
         type='deadline'
@@ -168,7 +168,7 @@ function Deadline ({ miners, client, head }) {
         <WindowPoSt
           link={d => `/miners/${minerId}/deadlines/${deadlineId}`}
           deadlines={deadlineArray(deadlineId)}
-          head={head}
+          head={data.head}
           out={({ d, head, i }) => (i === 0 ? `Today` : `${i}d ago`)}
         />
       </div>

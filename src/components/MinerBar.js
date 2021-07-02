@@ -1,19 +1,18 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import {emoji} from "../emoji";
 
-export default function MinerBar ({
-  client,
-  miners,
-  minerId,
-  deadlineId,
-  sectorId,
-  type,
-  miner,
-  sector
-}) {
+export default function MinerBar (
+  {
+    minerId,
+    deadlineId,
+    sectorId,
+    type,
+    miner,
+    sector
+  }) {
   return (
     <div className='section minerbar'>
-      {/* <div>{miner && miner.info && JSON.stringify(miner.info)}</div> */}
       <div className='minerId'>
         {!type && (
           <>
@@ -22,7 +21,7 @@ export default function MinerBar ({
               <a href={`https://filfox.info/en/address/${minerId}`}>↗</a>
             </span>
             <span className='rekt rekt-miner'>MINER</span>
-            {miner && miner.deposits && +miner.deposits.FeeDebt !== 0 && (
+            {miner && miner.deposits && +miner.deposits.feeDebt !== 0 && (
               <span className='rekt'>DEBT</span>
             )}
           </>
@@ -67,13 +66,10 @@ export default function MinerBar ({
       )}
       {!type && (
         <div>
-          {miners && miners[minerId] && miners[minerId].tag && (
+          {miner && (miner.tag?.name || miner.country) && (
             <span className='miner-name'>
-              {miners[minerId].tag.name}
-
-              {miners && miners[minerId].location && (
-                <span> {miners[minerId].location.flagEmoji}</span>
-              )}
+              {miner.tag.name}
+              {miner && miner.country && `  ${emoji[miner.country].emoji}`}
             </span>
           )}
         </div>

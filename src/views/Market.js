@@ -1,67 +1,23 @@
-import React, { useState, useEffect } from 'react'
+import React, {useState, useEffect, useContext} from 'react'
 import { withRouter } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import Summary from '../components/Summary'
 import Spacegap from '../components/Spacegap'
 import FilToken from '../components/FilToken'
+import {DatastoreContext} from "../contexts/api";
+import filesize from 'filesize';
 
 const d3 = require('d3')
-const f = d3.format(',')
 const f0 = d3.format(',.0f')
 const f3 = d3.format(',.3f')
-const f1 = d3.format(',.1f')
 
-function Market ({ miners, client, actors, head }) {
-  const econSummary =
-    actors &&
-    client.computeEconomics(head, actors, {
-      projectedDays: 1
-    })
-
-  const WindowPoStGasAvg = 534297287
-  const PreCommitGasAvg = 21701073
-  const ProveCommitGasAvg = 47835932
-
-  const [minersInfo, setMinersInfo] = useState({})
-
-  useEffect(() => {
-    // if (!miners) {
-    //   setMinersInfo({})
-    //   return
-    // }
-    setMinersInfo(miners)
-  }, [miners])
-
-  let count = 0
-
-  useEffect(() => {
-    if (!client || !head || !actors) {
-      return
-    }
-
-    console.log('reload miners list', count++)
-
-    let mounted = true
-    const setMinersIfMounted = info => {
-      if (mounted) setMinersInfo(info)
-    }
-
-    Object.keys(minersInfo).forEach(minerId => {
-      client.updateMinerMarketInfo(
-        minersInfo,
-        minerId,
-        setMinersIfMounted,
-        head
-      )
-    })
-    return () => {
-      mounted = false
-    }
-  }, [client, head, actors])
+function Market()  {
+  const { data } = useContext(DatastoreContext)
+  const { actors } = data;
 
   return (
     <section id='market' className='container'>
-      {/* <Spacegap /> */}
+       {/*<Spacegap />*/}
       <div class='section minerbar'>
         <div class='minerId'>
           <Link to='/market'>Market</Link>
@@ -71,11 +27,9 @@ function Market ({ miners, client, actors, head }) {
         <div className='grid'>
           <Summary
             title={
-              actors && (
+              data && (
                 <>
-                  {f3(
-                    +actors.Market.State.TotalProviderLockedCollateral / 1e18
-                  )}
+                  {f3(actors && actors.totalProviderLockedCollateral)}
                   <FilToken />
                 </>
               )
@@ -84,9 +38,9 @@ function Market ({ miners, client, actors, head }) {
           />
           <Summary
             title={
-              actors && (
+              data && (
                 <>
-                  {f3(+actors.Market.State.TotalClientStorageFee / 1e18)}
+                  {f3(actors && actors.totalClientStorageFee)}
                   <FilToken />
                 </>
               )
@@ -94,17 +48,9 @@ function Market ({ miners, client, actors, head }) {
             desc='Client Storage Fee'
           />
           <Summary
-            title={actors && <>{f0(+actors.Market.State.NextID)}</>}
+            title={actors && <>{f0(actors.nextId)}</>}
             desc='Total deals'
           />
-          {/* <Summary
-              title={`${f0(+actors.Supply.FilBurnt / 1e18 || 0)} FIL`}
-              desc='Burnt'
-            />
-            <Summary
-              desc='Locked'
-              title={`${f0(+actors.Supply.FilLocked / 1e18 || 0)} FIL`}
-            /> */}
         </div>
         These numbers are approximate projections based on the current network
         state and may be incorrect, do your own research.
@@ -124,39 +70,30 @@ function Market ({ miners, client, actors, head }) {
               </tr>
             </thead>
             <tbody>
-              {minersInfo &&
-                miners &&
-                Object.keys(miners)
-                  // .slice(0, 5)
-                  .map((d, i) => (
-                    <tr key={i}>
-                      <th scope='row'>{i + 1}</th>
+              {data && data.miners && Object.keys(data.miners)
+                  .map((address, idx) => (
+                    <tr key={idx}>
+                      <th scope='row'>{idx + 1}</th>
                       <td align='right' className='minerAddress'>
-                        <Link to={`/miners/${miners[d].address}`}>
-                          {miners && miners[d] && miners[d].address}
+                        <Link to={`/miners/${data.miners[address].address}`}>
+                          {data.miners[address].address}
                         </Link>
                       </td>
                       <td align='right'>
-                        {f1(
-                          minersInfo[d] && +minersInfo[d].rawBytePower / 2 ** 50
-                        )}{' '}
-                        PiB
+                        {filesize(data.miners[address].rawPower, { standard: "iec" })}
                       </td>
                       <td align='right'>
-                        {minersInfo[d] && minersInfo[d].ask ? (
-                          +minersInfo[d].ask.Error ? (
+                        {!data.miners[address].price ? (
                             'no price'
                           ) : (
                             `${f3(
-                              (+minersInfo[d].ask.Price / 1e18) *
+                              (data.miners[address].price / 1e18) *
                                 2880 *
                                 30 *
                                 1024
-                            )} TiB/month`
+                            )} FIL TiB/month`
                           )
-                        ) : (
-                          <div className='gradient' />
-                        )}
+                        }
                       </td>
                     </tr>
                   ))}
