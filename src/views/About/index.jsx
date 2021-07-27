@@ -8,7 +8,7 @@ export function About() {
       <h1 className={s.header}>Methodology</h1>
       <p>Monitoring and analytics tools are important components of any network whether we are talking about audit processes, debugging processes or simple monitoring platforms. The Spacegap web application is one of the most comprehensive applications that serves the Filecoin blockchain. Based on on-chain data, but also aggregating data from other providers, it is able to provide information about the network status, tokens, network economy, gas usage analysis, as well as customised statistics for each miner about tokens, sectors, WindowPoSt and others. Each section of the application is described below</p>
       <h2 className={s.secondaryHeader}>Tokens</h2>
-      <p>This section provides data on the supply of tokens and a breakdown of their status. The data is obtained by querying the CirculatingSupply method of the Lotus state method group at different TipSets in order to get realtime and 24h old values. Based on this we disply:
+      <p>This section provides data on the supply of tokens and a breakdown of their status. The data is obtained by querying the CirculatingSupply method of the Lotus state method group at different TipSets in order to get realtime and 24h old values. Based on this we display:
         <ul>
           <li>circulating supply</li>
           <li>the amount of burned tokens</li>
