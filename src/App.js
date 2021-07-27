@@ -13,6 +13,7 @@ import AccountInfo from './views/AccountInfo'
 import AddressInfo from './views/AddressInfo'
 import TinySummary from './components/TinySummary'
 import Gas from './views/Gas'
+import { About } from './views/About'
 import Sector from './views/Sector'
 import Spacegap from './components/Spacegap'
 
@@ -49,6 +50,9 @@ function App () {
           <div className='container'>
             <Spacegap />
             <Switch>
+              <Route path='/about'>
+                <About />
+              </Route>
               <Route path='/miners/:minerId/deadlines/:deadlineId'>
                 <Deadline client={client} />
               </Route>
