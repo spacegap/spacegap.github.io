@@ -29,6 +29,23 @@ a:hover {
 /*   color: white; */
 /* } */
 
+.navigation-container {
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f5f9;
+}
+
+.navigation-links {
+  display: flex;
+  justify-content: space-between;
+  max-width: 400px;
+}
+
+.navigation-link {
+  margin-right: 16px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
 .Circle {
   height: 20px;
   width: 20px;
@@ -191,8 +208,8 @@ h3 {
   font-weight: 900;
   font-size: 30px;
   text-align: center;
-  margin-top: 150px;
-  margin-bottom: 50px;
+  margin: 48px auto;
+
   span {
     background: linear-gradient(
       to right,
@@ -207,21 +224,30 @@ h3 {
   }
 }
 
-.tiny-grid {
-  &:hover {
-    opacity: 1;
-  }
-  opacity: 0.5;
-  display: grid;
-  grid-column-gap: 16px;
-  grid-row-gap: 16px;
-  margin-bottom: 32px;
-  grid-template-columns: repeat(6, 1fr);
-  div a,
-  div span {
-    display: block;
-    font-weight: 600;
-  }
+.status-container {
+  background-color: #f0f5f9;
+}
+
+.status-items {
+  padding: 4px 30px;
+  display: flex;
+  justify-content: space-around;
+}
+
+.status-items .tiny {
+  display: flex;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.status-items .tiny span:first-of-type {
+  margin-right: 8px;
+}
+
+.status-items .tiny span:nth-of-type(2) {
+  color: #007bff;
 }
 
 .grid {
