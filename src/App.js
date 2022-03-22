@@ -13,8 +13,10 @@ import AccountInfo from './views/AccountInfo'
 import AddressInfo from './views/AddressInfo'
 import TinySummary from './components/TinySummary'
 import Gas from './views/Gas'
+import { About } from './views/About'
 import Sector from './views/Sector'
 import Spacegap from './components/Spacegap'
+import { Header } from './components/Header'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min'
@@ -39,16 +41,13 @@ function App () {
           <div>
             <TinySummary client={client} />
           </div>
-          <header className='container-fluid'>
-            <Link to='/'>
-              <h1 id='logo' className='logo'>
-                <span>spacegap</span>
-              </h1>
-            </Link>
-          </header>
+          <Header />
           <div className='container'>
             <Spacegap />
             <Switch>
+              <Route path='/about'>
+                <About />
+              </Route>
               <Route path='/miners/:minerId/deadlines/:deadlineId'>
                 <Deadline client={client} />
               </Route>

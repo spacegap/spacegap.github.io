@@ -1,0 +1,25 @@
+.sectionContainer {
+    padding: 0 0 80px;
+    margin: 0 auto;
+}
+
+.header {
+    font-weight: 600;
+    margin: 0 0 3rem;
+    text-align: center;
+}
+
+.secondaryHeader {
+    font-size: 1.8rem;
+    margin: 2rem 0 1rem;
+}
+
+@media screen and (max-width: 480px) {
+    .header {
+        font-size: 2rem;
+    }
+
+    .secondaryHeader {
+        font-size: 1.5rem;
+    }
+}

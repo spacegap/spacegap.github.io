@@ -69,15 +69,6 @@ function Home () {
         These numbers are approximate projections based on the current network
         state and may be incorrect, do your own research.
       </div>
-
-      <div className='section'>
-        <h3>Gas</h3>
-        See <Link to='/gas'> Gas </Link> for a detailed gas analysis.
-      </div>
-      <div className='section'>
-        <h3>Market</h3>
-        See <Link to='/market'> Market </Link>.
-      </div>
       <div className='section'>
         <h3>Top miners</h3>
         <div>
